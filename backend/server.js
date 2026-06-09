@@ -3,6 +3,9 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
+const authRoutes = require('./routes/authRoutes');
+const carRoutes = require('./routes/carRoutes');
+
 const app = express();
 
 // Middleware
@@ -15,7 +18,11 @@ mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => console.log('❌ MongoDB error:', err));
 
-// Basic route (test senare)
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/cars', carRoutes);
+
+// Basic route (test)
 app.get('/', (req, res) => {
   res.json({ message: 'Backend is running!' });
 });
