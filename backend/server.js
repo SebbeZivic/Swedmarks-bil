@@ -5,6 +5,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const carRoutes = require('./routes/carRoutes');
+const imageRoutes = require('./routes/imageRoutes');
 
 const app = express();
 
@@ -12,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use('/api/images', imageRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
