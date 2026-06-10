@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   createCar,
   updateCar,
@@ -27,9 +27,15 @@ export default function AdminPage() {
 
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState(null);
-  const [files, setFiles] = useState([]);
-  const [previews, setPreviews] = useState([]);
-  const [dragging, setDragging] = useState(false);
+
+  // Unified list: { id, src, file? }
+  // existing images → { id, src: base64DataUri }
+  // new images      → { id, src: blobUrl, file: File }
+  const [imageItems, setImageItems] = useState([]);
+  const [draggingFileOver, setDraggingFileOver] = useState(false);
+  const [dragOverIdx, setDragOverIdx] = useState(null);
+  const dragSrcIdx = useRef(null);
+
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formLoading, setFormLoading] = useState(false);
@@ -61,16 +67,71 @@ export default function AdminPage() {
     setForm((prev) => ({ ...prev, [name]: value }));
   }
 
-  function applyFiles(raw) {
-    const limited = Array.from(raw).slice(0, 5);
-    setFiles(limited);
-    setPreviews(limited.map((f) => URL.createObjectURL(f)));
+  function addFiles(raw) {
+    const newItems = Array.from(raw).map((file) => ({
+      id: `new-${Date.now()}-${Math.random()}`,
+      src: URL.createObjectURL(file),
+      file,
+    }));
+    setImageItems((prev) => [...prev, ...newItems].slice(0, 10));
   }
 
-  function handleDrop(e) {
+  function handleFileDrop(e) {
     e.preventDefault();
-    setDragging(false);
-    applyFiles(e.dataTransfer.files);
+    setDraggingFileOver(false);
+    addFiles(e.dataTransfer.files);
+  }
+
+  function moveImage(idx, dir) {
+    setImageItems((prev) => {
+      const next = idx + dir;
+      if (next < 0 || next >= prev.length) return prev;
+      const arr = [...prev];
+      [arr[idx], arr[next]] = [arr[next], arr[idx]];
+      return arr;
+    });
+  }
+
+  function removeImage(idx) {
+    setImageItems((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  function onImgDragStart(e, idx) {
+    dragSrcIdx.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    // Required by Safari; Chrome/Firefox accept empty but this is safest
+    e.dataTransfer.setData("text/plain", String(idx));
+    console.log("[img-drag] dragstart idx=", idx);
+  }
+
+  function onImgDragOver(e, idx) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverIdx !== idx) setDragOverIdx(idx);
+    console.log("[img-drag] dragover idx=", idx, "src=", dragSrcIdx.current);
+  }
+
+  function onImgDrop(e, idx) {
+    e.preventDefault();
+    e.stopPropagation();
+    const from = dragSrcIdx.current;
+    console.log("[img-drag] drop from=", from, "to=", idx);
+    if (from !== null && from !== idx) {
+      setImageItems((prev) => {
+        const arr = [...prev];
+        const [moved] = arr.splice(from, 1);
+        arr.splice(idx, 0, moved);
+        return arr;
+      });
+    }
+    dragSrcIdx.current = null;
+    setDragOverIdx(null);
+  }
+
+  function onImgDragEnd() {
+    console.log("[img-drag] dragend, resetting");
+    dragSrcIdx.current = null;
+    setDragOverIdx(null);
   }
 
   function startEdit(car) {
@@ -88,8 +149,12 @@ export default function AdminPage() {
       color: car.color,
       description: car.description,
     });
-    setFiles([]);
-    setPreviews([]);
+    setImageItems(
+      (car.images || []).map((src, i) => ({
+        id: `existing-${i}-${Date.now()}`,
+        src,
+      })),
+    );
     setFormError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -97,8 +162,7 @@ export default function AdminPage() {
   function cancelEdit() {
     setEditId(null);
     setForm(EMPTY_FORM);
-    setFiles([]);
-    setPreviews([]);
+    setImageItems([]);
     setFormError(null);
   }
 
@@ -117,16 +181,29 @@ export default function AdminPage() {
       const saved = editId
         ? await updateCar(editId, payload)
         : await createCar(payload);
+      const targetId = editId ?? saved._id;
 
-      if (files.length > 0) {
+      // Upload new images; backend appends → last element = newly uploaded URI
+      const newItems = imageItems.filter((item) => item.file);
+      const uploadedUris = {};
+      if (newItems.length > 0) {
         setUploading(true);
-        const targetId = editId ?? saved._id;
-        for (let i = 0; i < files.length; i++) {
-          await uploadImage(targetId, files[i]);
-          setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+        for (let i = 0; i < newItems.length; i++) {
+          const result = await uploadImage(targetId, newItems[i].file);
+          uploadedUris[newItems[i].id] =
+            result.car.images[result.car.images.length - 1];
+          setUploadProgress(Math.round(((i + 1) / newItems.length) * 100));
         }
         setUploading(false);
         setUploadProgress(0);
+      }
+
+      // Save final image order (existing in new positions + new uploads)
+      if (imageItems.length > 0) {
+        const finalImages = imageItems
+          .map((item) => (item.file ? uploadedUris[item.id] : item.src))
+          .filter(Boolean);
+        await updateCar(targetId, { ...payload, images: finalImages });
       }
 
       cancelEdit();
@@ -288,19 +365,25 @@ export default function AdminPage() {
             />
           </Field>
 
-          <Field label="Bilder (max 5)">
+          {/* ── IMAGES ── */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            <p style={s.label}>Bilder (max 10)</p>
+
             <div
-              style={{ ...s.dropZone, ...(dragging ? s.dropZoneActive : {}) }}
+              style={{
+                ...s.dropZone,
+                ...(draggingFileOver ? s.dropZoneActive : {}),
+              }}
               onDragOver={(e) => {
                 e.preventDefault();
-                setDragging(true);
+                setDraggingFileOver(true);
               }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={handleDrop}
+              onDragLeave={() => setDraggingFileOver(false)}
+              onDrop={handleFileDrop}
               onClick={() => document.getElementById("fileInput").click()}
             >
               <p style={s.dropText}>
-                {dragging
+                {draggingFileOver
                   ? "Släpp bilderna här"
                   : "Dra & släpp bilder hit, eller klicka för att välja"}
               </p>
@@ -310,34 +393,93 @@ export default function AdminPage() {
                 accept="image/*"
                 multiple
                 style={{ display: "none" }}
-                onChange={(e) => applyFiles(e.target.files)}
+                onChange={(e) => addFiles(e.target.files)}
               />
             </div>
 
-            {previews.length > 0 && (
-              <div style={s.previews}>
-                {previews.map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    alt={`Förhandsvisning ${i + 1}`}
-                    style={s.previewImg}
-                  />
-                ))}
-              </div>
+            {imageItems.length > 0 && (
+              <>
+                <p style={s.imgHint}>
+                  Dra för att byta ordning · Pilar för att flytta · Första
+                  bilden är omslagsfoto
+                </p>
+                <div style={s.imgGrid}>
+                  {imageItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      draggable={true}
+                      onDragStart={(e) => onImgDragStart(e, idx)}
+                      onDragOver={(e) => onImgDragOver(e, idx)}
+                      onDrop={(e) => onImgDrop(e, idx)}
+                      onDragEnd={onImgDragEnd}
+                      style={{
+                        ...s.imgCard,
+                        ...(dragOverIdx === idx ? s.imgCardOver : {}),
+                      }}
+                    >
+                      <img
+                        src={item.src}
+                        alt={`Bild ${idx + 1}`}
+                        style={s.imgCardImg}
+                        draggable={false}
+                      />
+
+                      {idx === 0 && (
+                        <span style={s.coverBadge}>Omslagsfoto</span>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        style={s.removeBtn}
+                        title="Ta bort bild"
+                      >
+                        ×
+                      </button>
+
+                      <div style={s.arrowRow}>
+                        <button
+                          type="button"
+                          onClick={() => moveImage(idx, -1)}
+                          disabled={idx === 0}
+                          style={{
+                            ...s.arrowBtn,
+                            opacity: idx === 0 ? 0.25 : 1,
+                          }}
+                          title="Flytta vänster"
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => moveImage(idx, 1)}
+                          disabled={idx === imageItems.length - 1}
+                          style={{
+                            ...s.arrowBtn,
+                            opacity: idx === imageItems.length - 1 ? 0.25 : 1,
+                          }}
+                          title="Flytta höger"
+                        >
+                          →
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
             )}
 
             {uploading && (
-              <div style={s.progressWrap}>
+              <div style={s.progressOuter}>
                 <div
-                  style={{ ...s.progressBar, width: `${uploadProgress}%` }}
+                  style={{ ...s.progressInner, width: `${uploadProgress}%` }}
                 />
                 <span style={s.progressText}>
                   Laddar upp… {uploadProgress}%
                 </span>
               </div>
             )}
-          </Field>
+          </div>
 
           <div style={s.formActions}>
             {editId && (
@@ -475,7 +617,7 @@ const s = {
   dropZone: {
     border: "2px dashed #cbcac7",
     borderRadius: "8px",
-    padding: "2rem 1rem",
+    padding: "1.5rem 1rem",
     textAlign: "center",
     cursor: "pointer",
     backgroundColor: "#faf7f6",
@@ -490,30 +632,96 @@ const s = {
     fontSize: "0.9rem",
     pointerEvents: "none",
   },
-  previews: {
+  imgHint: {
+    fontSize: "0.78rem",
+    color: "#cbcac7",
+    margin: 0,
+  },
+  imgGrid: {
     display: "flex",
-    gap: "0.5rem",
     flexWrap: "wrap",
-    marginTop: "0.75rem",
+    gap: "0.75rem",
   },
-  previewImg: {
-    width: "80px",
-    height: "60px",
+  imgCard: {
+    position: "relative",
+    width: "130px",
+    borderWidth: "2px",
+    borderStyle: "solid",
+    borderColor: "#e3ded7",
+    borderRadius: "8px",
+    overflow: "hidden",
+    backgroundColor: "#faf7f6",
+    cursor: "grab",
+    userSelect: "none",
+  },
+  imgCardOver: {
+    borderColor: "#285570",
+    boxShadow: "0 0 0 2px #28557044",
+  },
+
+  imgCardImg: {
+    width: "130px",
+    height: "90px",
     objectFit: "cover",
-    borderRadius: "6px",
-    border: "1px solid #e3ded7",
+    display: "block",
   },
-  progressWrap: {
-    marginTop: "0.75rem",
+  coverBadge: {
+    position: "absolute",
+    bottom: "28px",
+    left: 0,
+    right: 0,
+    backgroundColor: "#285570",
+    color: "#ffffff",
+    fontSize: "0.65rem",
+    fontWeight: 700,
+    textAlign: "center",
+    padding: "2px 0",
+    letterSpacing: "0.03em",
+  },
+  removeBtn: {
+    position: "absolute",
+    top: "4px",
+    right: "4px",
+    width: "20px",
+    height: "20px",
+    borderRadius: "50%",
+    border: "none",
+    backgroundColor: "rgba(0,0,0,0.55)",
+    color: "#ffffff",
+    fontSize: "14px",
+    lineHeight: "18px",
+    textAlign: "center",
+    cursor: "pointer",
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  arrowRow: {
+    display: "flex",
+    borderTop: "1px solid #e3ded7",
+  },
+  arrowBtn: {
+    flex: 1,
+    border: "none",
+    backgroundColor: "#faf7f6",
+    color: "#285570",
+    fontSize: "1rem",
+    padding: "4px 0",
+    cursor: "pointer",
+    transition: "background-color 0.15s",
+  },
+  progressOuter: {
     position: "relative",
     backgroundColor: "#e3ded7",
     borderRadius: "4px",
     height: "8px",
-    overflow: "hidden",
+    overflow: "visible",
   },
-  progressBar: {
+  progressInner: {
     height: "100%",
     backgroundColor: "#285570",
+    borderRadius: "4px",
     transition: "width 0.3s",
   },
   progressText: {
