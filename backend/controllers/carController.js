@@ -26,7 +26,19 @@ exports.getCarById = async (req, res) => {
 // Skapa ny bil (admin)
 exports.createCar = async (req, res) => {
   try {
-    const car = new Car(req.body);
+    const car = new Car({
+      title: req.body.title,
+      brand: req.body.brand,
+      model: req.body.model,
+      year: req.body.year,
+      mileage: req.body.mileage,
+      price: req.body.price,
+      fuel: req.body.fuel,
+      transmission: req.body.transmission,
+      bodyType: req.body.bodyType,
+      color: req.body.color,
+      description: req.body.description
+    });
     await car.save();
     res.status(201).json({ message: 'Bil skapad', car });
   } catch (error) {
