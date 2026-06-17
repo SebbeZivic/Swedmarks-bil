@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import CatalogPage from "./pages/CatalogPage";
+import CarDetailPage from "./pages/CarDetailPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 
@@ -49,6 +50,7 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/cars/:id" element={<CarDetailPage />} />
           <Route path="/logout" element={<LogoutRedirect />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { getAllCars } from "../services/api";
+import { useSearchParams } from "react-router-dom";
 
 function HeartIcon({ filled }) {
   return filled ? (
@@ -44,7 +46,16 @@ function loadFavorites() {
 }
 
 export default function CatalogPage() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const bodyTypeFilter = searchParams.get("bodyType");
+
   const [cars, setCars] = useState([]);
+  const filteredCars = bodyTypeFilter
+    ? cars.filter(
+        (c) => c.bodyType?.toLowerCase() === bodyTypeFilter.toLowerCase(),
+      )
+    : cars;
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [favorites, setFavorites] = useState(loadFavorites);
@@ -86,17 +97,26 @@ export default function CatalogPage() {
     <main style={styles.page}>
       <h1 style={styles.heading}>Bilkatalog</h1>
       <div style={styles.grid}>
-        {cars.map((car) => {
+        {filteredCars.map((car) => {
           const isFav = favorites.includes(car._id);
           const imgSrc = car.images?.[0] || null;
 
           return (
-            <article key={car._id} style={styles.card}>
+            <article
+              key={car._id}
+              style={styles.card}
+              onClick={() => navigate(`/cars/${car._id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) =>
+                e.key === "Enter" && navigate(`/cars/${car._id}`)
+              }
+            >
               <div style={styles.imageWrap}>
                 {imgSrc ? (
                   <img
                     src={imgSrc}
-                    alt={`${car.make} ${car.model}`}
+                    alt={`${car.brand} ${car.model}`}
                     style={styles.image}
                   />
                 ) : (
@@ -104,7 +124,10 @@ export default function CatalogPage() {
                 )}
                 <button
                   style={styles.heartBtn}
-                  onClick={() => toggleFavorite(car._id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(car._id);
+                  }}
                   aria-label={
                     isFav ? "Ta bort från favoriter" : "Lägg till i favoriter"
                   }
@@ -114,7 +137,7 @@ export default function CatalogPage() {
               </div>
               <div style={styles.info}>
                 <h2 style={styles.title}>
-                  {car.make} {car.model}
+                  {car.brand} {car.model}
                 </h2>
                 <span style={styles.year}>{car.year}</span>
                 <div style={styles.details}>
@@ -169,6 +192,7 @@ const styles = {
     display: "flex",
     flexDirection: "column",
     transition: "box-shadow 0.2s",
+    cursor: "pointer",
   },
   imageWrap: {
     position: "relative",
