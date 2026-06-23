@@ -5,6 +5,8 @@ import {
   deleteCar,
   getAllCars,
   uploadImage,
+  getAllMessages,
+  replyToMessage,
 } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -22,32 +24,49 @@ const EMPTY_FORM = {
   description: "",
 };
 
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleString("sv-SE", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function AdminPage() {
   useAuth();
 
+  // ── Car form state ──
   const [form, setForm] = useState(EMPTY_FORM);
   const [editId, setEditId] = useState(null);
-
-  // Unified list: { id, src, file? }
-  // existing images → { id, src: base64DataUri }
-  // new images      → { id, src: blobUrl, file: File }
   const [imageItems, setImageItems] = useState([]);
   const [draggingFileOver, setDraggingFileOver] = useState(false);
   const [dragOverIdx, setDragOverIdx] = useState(null);
   const dragSrcIdx = useRef(null);
-
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState(null);
 
+  // ── Car list state ──
   const [cars, setCars] = useState([]);
   const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
+  // ── Messages state ──
+  const [messages, setMessages] = useState([]);
+  const [msgsLoading, setMsgsLoading] = useState(true);
+  const [msgsError, setMsgsError] = useState(null);
+  const [selectedMsg, setSelectedMsg] = useState(null);
+  const [replyText, setReplyText] = useState("");
+  const [replying, setReplying] = useState(false);
+  const [replyError, setReplyError] = useState(null);
+
   useEffect(() => {
     fetchCars();
+    fetchMessages();
   }, []);
 
   async function fetchCars() {
@@ -62,6 +81,49 @@ export default function AdminPage() {
     }
   }
 
+  async function fetchMessages() {
+    setMsgsLoading(true);
+    setMsgsError(null);
+    try {
+      setMessages(await getAllMessages());
+    } catch (err) {
+      setMsgsError(err.message);
+    } finally {
+      setMsgsLoading(false);
+    }
+  }
+
+  // ── Message handlers ──
+  function openMsg(msg) {
+    setSelectedMsg(msg);
+    setReplyText("");
+    setReplyError(null);
+  }
+
+  function closeMsg() {
+    setSelectedMsg(null);
+    setReplyText("");
+    setReplyError(null);
+  }
+
+  async function handleReply(e) {
+    e.preventDefault();
+    setReplying(true);
+    setReplyError(null);
+    try {
+      const { msg: updated } = await replyToMessage(selectedMsg._id, replyText);
+      setMessages((prev) =>
+        prev.map((m) => (m._id === updated._id ? updated : m))
+      );
+      closeMsg();
+    } catch (err) {
+      setReplyError(err.message);
+    } finally {
+      setReplying(false);
+    }
+  }
+
+  // ── Car form handlers ──
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -99,23 +161,19 @@ export default function AdminPage() {
   function onImgDragStart(e, idx) {
     dragSrcIdx.current = idx;
     e.dataTransfer.effectAllowed = "move";
-    // Required by Safari; Chrome/Firefox accept empty but this is safest
     e.dataTransfer.setData("text/plain", String(idx));
-    console.log("[img-drag] dragstart idx=", idx);
   }
 
   function onImgDragOver(e, idx) {
     e.preventDefault();
     e.dataTransfer.dropEffect = "move";
     if (dragOverIdx !== idx) setDragOverIdx(idx);
-    console.log("[img-drag] dragover idx=", idx, "src=", dragSrcIdx.current);
   }
 
   function onImgDrop(e, idx) {
     e.preventDefault();
     e.stopPropagation();
     const from = dragSrcIdx.current;
-    console.log("[img-drag] drop from=", from, "to=", idx);
     if (from !== null && from !== idx) {
       setImageItems((prev) => {
         const arr = [...prev];
@@ -129,7 +187,6 @@ export default function AdminPage() {
   }
 
   function onImgDragEnd() {
-    console.log("[img-drag] dragend, resetting");
     dragSrcIdx.current = null;
     setDragOverIdx(null);
   }
@@ -153,7 +210,7 @@ export default function AdminPage() {
       (car.images || []).map((src, i) => ({
         id: `existing-${i}-${Date.now()}`,
         src,
-      })),
+      }))
     );
     setFormError(null);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -183,7 +240,6 @@ export default function AdminPage() {
         : await createCar(payload);
       const targetId = editId ?? saved._id;
 
-      // Upload new images; backend appends → last element = newly uploaded URI
       const newItems = imageItems.filter((item) => item.file);
       const uploadedUris = {};
       if (newItems.length > 0) {
@@ -198,7 +254,6 @@ export default function AdminPage() {
         setUploadProgress(0);
       }
 
-      // Save final image order (existing in new positions + new uploads)
       if (imageItems.length > 0) {
         const finalImages = imageItems
           .map((item) => (item.file ? uploadedUris[item.id] : item.src))
@@ -229,9 +284,11 @@ export default function AdminPage() {
     }
   }
 
+  const unreadCount = messages.filter((m) => !m.replied).length;
+
   return (
     <main style={s.page}>
-      {/* ── FORM ── */}
+      {/* ── CAR FORM ── */}
       <section style={s.section}>
         <h2 style={s.sectionTitle}>
           {editId ? "Redigera bil" : "Lägg till bil"}
@@ -423,11 +480,9 @@ export default function AdminPage() {
                         style={s.imgCardImg}
                         draggable={false}
                       />
-
                       {idx === 0 && (
                         <span style={s.coverBadge}>Omslagsfoto</span>
                       )}
-
                       <button
                         type="button"
                         onClick={() => removeImage(idx)}
@@ -436,7 +491,6 @@ export default function AdminPage() {
                       >
                         ×
                       </button>
-
                       <div style={s.arrowRow}>
                         <button
                           type="button"
@@ -502,9 +556,61 @@ export default function AdminPage() {
         </form>
       </section>
 
-      {/* ── LIST ── */}
+      {/* ── MESSAGES ── */}
       <section style={s.section}>
-        <h2 style={s.sectionTitle}>Mina bilar</h2>
+        <div style={s.sectionHeader}>
+          <h2 style={s.sectionTitle}>Mottagna meddelanden</h2>
+          {unreadCount > 0 && (
+            <span style={s.unreadBadge}>{unreadCount} obesvarade</span>
+          )}
+        </div>
+
+        {msgsLoading && <p style={s.statusText}>Laddar meddelanden…</p>}
+        {msgsError && <p style={s.errorMsg}>{msgsError}</p>}
+        {!msgsLoading && !msgsError && messages.length === 0 && (
+          <p style={s.statusText}>Inga meddelanden ännu.</p>
+        )}
+
+        <div style={s.msgList}>
+          {messages.map((msg) => (
+            <button
+              key={msg._id}
+              style={{
+                ...s.msgRow,
+                ...(msg.replied ? {} : s.msgRowUnread),
+              }}
+              onClick={() => openMsg(msg)}
+            >
+              <div style={s.msgLeft}>
+                <span style={s.msgName}>{msg.name}</span>
+                <span style={s.msgEmail}>{msg.email}</span>
+              </div>
+              <p style={s.msgPreview}>
+                {msg.message.length > 90
+                  ? msg.message.slice(0, 90) + "…"
+                  : msg.message}
+              </p>
+              <div style={s.msgRight}>
+                <span style={s.msgDate}>{formatDate(msg.createdAt)}</span>
+                <span
+                  style={{
+                    ...s.statusBadge,
+                    ...(msg.replied ? s.statusReplied : s.statusPending),
+                  }}
+                >
+                  {msg.replied ? "Besvarad" : "Ej besvarad"}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      </section>
+
+      {/* ── CAR LIST ── */}
+      <section style={s.section}>
+        <h2 style={{ ...s.sectionTitle, ...s.sectionTitleBorder }}>
+          Mina bilar
+        </h2>
 
         {listLoading && <p style={s.statusText}>Laddar bilar…</p>}
         {listError && <p style={s.errorMsg}>{listError}</p>}
@@ -552,6 +658,83 @@ export default function AdminPage() {
           })}
         </div>
       </section>
+
+      {/* ── REPLY MODAL ── */}
+      {selectedMsg && (
+        <div style={s.overlay} onClick={closeMsg}>
+          <div style={s.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={s.modalHeader}>
+              <div>
+                <h3 style={s.modalTitle}>
+                  Meddelande från {selectedMsg.name}
+                </h3>
+                <p style={s.modalMeta}>{formatDate(selectedMsg.createdAt)}</p>
+              </div>
+              <button
+                style={s.closeBtn}
+                onClick={closeMsg}
+                aria-label="Stäng"
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={s.modalBody}>
+              <div style={s.senderInfo}>
+                <div style={s.senderRow}>
+                  <span style={s.senderLabel}>Namn</span>
+                  <span style={s.senderValue}>{selectedMsg.name}</span>
+                </div>
+                <div style={s.senderRow}>
+                  <span style={s.senderLabel}>E-post</span>
+                  <span style={s.senderValue}>{selectedMsg.email}</span>
+                </div>
+                {selectedMsg.phone && (
+                  <div style={s.senderRow}>
+                    <span style={s.senderLabel}>Telefon</span>
+                    <span style={s.senderValue}>{selectedMsg.phone}</span>
+                  </div>
+                )}
+              </div>
+
+              <div style={s.msgBox}>
+                <p style={s.msgBoxLabel}>Meddelande</p>
+                <p style={s.msgBoxText}>{selectedMsg.message}</p>
+              </div>
+
+              {selectedMsg.replied ? (
+                <div style={s.replyBox}>
+                  <p style={s.replyBoxLabel}>
+                    Ditt svar · {formatDate(selectedMsg.replyDate)}
+                  </p>
+                  <p style={s.replyBoxText}>{selectedMsg.reply}</p>
+                </div>
+              ) : (
+                <form onSubmit={handleReply} style={s.replyForm}>
+                  <label style={s.label}>Skriv ett svar</label>
+                  <textarea
+                    style={{ ...s.input, minHeight: "90px", resize: "vertical" }}
+                    value={replyText}
+                    onChange={(e) => setReplyText(e.target.value)}
+                    placeholder="Ditt svar till kunden…"
+                    required
+                  />
+                  {replyError && <p style={s.errorMsg}>{replyError}</p>}
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <button
+                      type="submit"
+                      style={{ ...s.submitBtn, opacity: replying ? 0.7 : 1 }}
+                      disabled={replying}
+                    >
+                      {replying ? "Sparar…" : "Skicka svar"}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
@@ -574,14 +757,249 @@ const s = {
   section: {
     marginBottom: "3rem",
   },
-  sectionTitle: {
-    fontSize: "1.4rem",
-    fontWeight: 700,
-    color: "#285570",
+  sectionHeader: {
+    display: "flex",
+    alignItems: "center",
+    gap: "0.75rem",
     marginBottom: "1.25rem",
     paddingBottom: "0.5rem",
     borderBottom: "2px solid #e3ded7",
   },
+  sectionTitle: {
+    fontSize: "1.4rem",
+    fontWeight: 700,
+    color: "#285570",
+    margin: 0,
+  },
+  sectionTitleBorder: {
+    display: "block",
+    marginBottom: "1.25rem",
+    paddingBottom: "0.5rem",
+    borderBottom: "2px solid #e3ded7",
+  },
+  unreadBadge: {
+    backgroundColor: "#e8a000",
+    color: "#ffffff",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    borderRadius: "20px",
+    padding: "0.2rem 0.65rem",
+    letterSpacing: "0.02em",
+  },
+
+  // ── Messages list ──
+  msgList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+  },
+  msgRow: {
+    display: "grid",
+    gridTemplateColumns: "160px 1fr 160px",
+    gap: "1rem",
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    border: "1px solid #e3ded7",
+    borderRadius: "8px",
+    padding: "0.85rem 1rem",
+    cursor: "pointer",
+    textAlign: "left",
+    fontFamily: "inherit",
+    transition: "box-shadow 0.15s, border-color 0.15s",
+    width: "100%",
+  },
+  msgRowUnread: {
+    borderLeftWidth: "3px",
+    borderLeftColor: "#285570",
+  },
+  msgLeft: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "2px",
+    overflow: "hidden",
+  },
+  msgName: {
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "#285570",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  msgEmail: {
+    fontSize: "0.78rem",
+    color: "#cbcac7",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+  },
+  msgPreview: {
+    fontSize: "0.85rem",
+    color: "#333333",
+    margin: 0,
+    overflow: "hidden",
+    display: "-webkit-box",
+    WebkitLineClamp: 2,
+    WebkitBoxOrient: "vertical",
+  },
+  msgRight: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "flex-end",
+    gap: "0.4rem",
+  },
+  msgDate: {
+    fontSize: "0.75rem",
+    color: "#cbcac7",
+    whiteSpace: "nowrap",
+  },
+  statusBadge: {
+    fontSize: "0.7rem",
+    fontWeight: 700,
+    borderRadius: "20px",
+    padding: "0.2rem 0.6rem",
+    letterSpacing: "0.02em",
+    whiteSpace: "nowrap",
+  },
+  statusReplied: {
+    backgroundColor: "#e6f2f8",
+    color: "#285570",
+  },
+  statusPending: {
+    backgroundColor: "#fff3e0",
+    color: "#e8a000",
+  },
+
+  // ── Modal ──
+  overlay: {
+    position: "fixed",
+    inset: 0,
+    backgroundColor: "rgba(0,0,0,0.45)",
+    zIndex: 500,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "1rem",
+  },
+  modal: {
+    backgroundColor: "#ffffff",
+    borderRadius: "12px",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+    width: "100%",
+    maxWidth: "560px",
+    maxHeight: "90vh",
+    overflow: "auto",
+  },
+  modalHeader: {
+    display: "flex",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    padding: "1.25rem 1.5rem",
+    borderBottom: "1px solid #e3ded7",
+  },
+  modalTitle: {
+    fontSize: "1rem",
+    fontWeight: 700,
+    color: "#285570",
+    margin: 0,
+  },
+  modalMeta: {
+    fontSize: "0.78rem",
+    color: "#cbcac7",
+    marginTop: "2px",
+  },
+  closeBtn: {
+    background: "none",
+    border: "none",
+    fontSize: "1.5rem",
+    lineHeight: 1,
+    color: "#cbcac7",
+    cursor: "pointer",
+    padding: "0 0 0 1rem",
+    flexShrink: 0,
+  },
+  modalBody: {
+    padding: "1.25rem 1.5rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1.1rem",
+  },
+  senderInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    backgroundColor: "#faf7f6",
+    borderRadius: "8px",
+    padding: "0.85rem 1rem",
+  },
+  senderRow: {
+    display: "flex",
+    gap: "0.75rem",
+    alignItems: "baseline",
+  },
+  senderLabel: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#cbcac7",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+    minWidth: "56px",
+    flexShrink: 0,
+  },
+  senderValue: {
+    fontSize: "0.9rem",
+    color: "#333333",
+  },
+  msgBox: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.4rem",
+  },
+  msgBoxLabel: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#cbcac7",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+    margin: 0,
+  },
+  msgBoxText: {
+    fontSize: "0.92rem",
+    color: "#333333",
+    lineHeight: 1.6,
+    margin: 0,
+    whiteSpace: "pre-wrap",
+  },
+  replyBox: {
+    backgroundColor: "#e6f2f8",
+    borderRadius: "8px",
+    padding: "0.85rem 1rem",
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.4rem",
+  },
+  replyBoxLabel: {
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#285570",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
+    margin: 0,
+  },
+  replyBoxText: {
+    fontSize: "0.9rem",
+    color: "#285570",
+    lineHeight: 1.6,
+    margin: 0,
+    whiteSpace: "pre-wrap",
+  },
+  replyForm: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.6rem",
+  },
+
+  // ── Shared ──
   form: {
     display: "flex",
     flexDirection: "column",
@@ -613,6 +1031,7 @@ const s = {
     outline: "none",
     width: "100%",
     fontFamily: "inherit",
+    boxSizing: "border-box",
   },
   dropZone: {
     border: "2px dashed #cbcac7",
@@ -658,7 +1077,6 @@ const s = {
     borderColor: "#285570",
     boxShadow: "0 0 0 2px #28557044",
   },
-
   imgCardImg: {
     width: "130px",
     height: "90px",
@@ -746,6 +1164,7 @@ const s = {
     fontSize: "0.95rem",
     fontWeight: 600,
     cursor: "pointer",
+    fontFamily: "inherit",
   },
   cancelBtn: {
     backgroundColor: "transparent",
@@ -756,6 +1175,7 @@ const s = {
     fontSize: "0.95rem",
     fontWeight: 600,
     cursor: "pointer",
+    fontFamily: "inherit",
   },
   errorMsg: {
     color: "#b00020",
@@ -764,6 +1184,7 @@ const s = {
     border: "1px solid #f5c6cb",
     borderRadius: "6px",
     padding: "0.6rem 0.9rem",
+    margin: 0,
   },
   statusText: {
     color: "#cbcac7",
@@ -833,6 +1254,7 @@ const s = {
     fontSize: "0.85rem",
     fontWeight: 600,
     cursor: "pointer",
+    fontFamily: "inherit",
   },
   deleteBtn: {
     flex: 1,
@@ -844,5 +1266,6 @@ const s = {
     fontSize: "0.85rem",
     fontWeight: 600,
     cursor: "pointer",
+    fontFamily: "inherit",
   },
 };

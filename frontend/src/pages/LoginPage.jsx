@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { setToken } = useAuth();
+  const { login: authLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -21,7 +21,7 @@ export default function LoginPage() {
     try {
       const fn = tab === "login" ? login : register;
       const data = await fn(email, password);
-      setToken(data.token);
+      authLogin(data.token, data.user);
       navigate("/");
     } catch (err) {
       setError(err.message);

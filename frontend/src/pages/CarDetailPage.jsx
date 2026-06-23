@@ -369,12 +369,12 @@ export default function CarDetailPage() {
               <div>
                 <p style={styles.sellerLabel}>Säljare</p>
                 <p style={styles.sellerName}>Swedmarks Bil</p>
-                <p style={styles.sellerLocation}>Göteborg, Sverige</p>
+                <p style={styles.sellerLocation}>Helsingborg, Sverige</p>
               </div>
             </div>
             <button
               style={styles.contactBtn}
-              onClick={() => alert("Kontaktformulär kommer snart!")}
+              onClick={() => navigate("/contact")}
             >
               Kontakta säljaren
             </button>

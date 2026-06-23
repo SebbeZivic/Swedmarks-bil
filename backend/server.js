@@ -6,20 +6,21 @@ require("dotenv").config();
 const authRoutes = require("./routes/authRoutes");
 const carRoutes = require("./routes/carRoutes");
 const imageRoutes = require("./routes/imageRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 
 const app = express();
 
 // Middleware
 app.use(
   cors({
-    origin: "http://localhost:5174",
+    origin: /^http:\/\/localhost(:\d+)?$/,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
-app.use(express.json());
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ limit: "100mb", extended: true }));
 app.use("/api/images", imageRoutes);
 
 // MongoDB Connection
@@ -31,6 +32,7 @@ mongoose
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/cars", carRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Basic route (test)
 app.get("/", (req, res) => {

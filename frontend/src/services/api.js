@@ -87,6 +87,34 @@ export const deleteCar = async (id) => {
   }
 };
 
+// Meddelanden
+export const createMessage = async (data) => {
+  try {
+    const { data: res } = await api.post("/messages", data);
+    return res;
+  } catch (error) {
+    handleError(error);
+  }
+};
+
+export const getAllMessages = async () => {
+  try {
+    const { data } = await api.get("/messages");
+    return data;
+  } catch (error) {
+    handleError(error);
+  }
+};
+
+export const replyToMessage = async (id, reply) => {
+  try {
+    const { data } = await api.put(`/messages/${id}`, { reply });
+    return data;
+  } catch (error) {
+    handleError(error);
+  }
+};
+
 // Bilder
 export const uploadImage = async (carId, file) => {
   try {
