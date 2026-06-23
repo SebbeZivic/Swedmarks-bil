@@ -288,6 +288,11 @@ export default function AdminPage() {
 
   return (
     <main style={s.page}>
+      <style>{`
+        .admin-input::placeholder { color: rgba(160,160,176,0.35); }
+        .admin-input:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.05) !important; outline: none; }
+        .admin-input option { background: #1a1f3a; color: #e0e0e0; }
+      `}</style>
       {/* ── CAR FORM ── */}
       <section style={s.section}>
         <h2 style={s.sectionTitle}>
@@ -300,6 +305,7 @@ export default function AdminPage() {
           <div style={s.formGrid}>
             <Field label="Titel">
               <input
+                className="admin-input"
                 style={s.input}
                 name="title"
                 value={form.title}
@@ -310,6 +316,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Märke">
               <input
+                className="admin-input"
                 style={s.input}
                 name="brand"
                 value={form.brand}
@@ -320,6 +327,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Modell">
               <input
+                className="admin-input"
                 style={s.input}
                 name="model"
                 value={form.model}
@@ -330,6 +338,7 @@ export default function AdminPage() {
             </Field>
             <Field label="År">
               <input
+                className="admin-input"
                 style={s.input}
                 type="number"
                 name="year"
@@ -343,6 +352,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Miltal (km)">
               <input
+                className="admin-input"
                 style={s.input}
                 type="number"
                 name="mileage"
@@ -355,6 +365,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Pris (kr)">
               <input
+                className="admin-input"
                 style={s.input}
                 type="number"
                 name="price"
@@ -367,6 +378,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Drivmedel">
               <select
+                className="admin-input"
                 style={s.input}
                 name="fuel"
                 value={form.fuel}
@@ -379,6 +391,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Växellåda">
               <select
+                className="admin-input"
                 style={s.input}
                 name="transmission"
                 value={form.transmission}
@@ -391,6 +404,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Karosseri">
               <input
+                className="admin-input"
                 style={s.input}
                 name="bodyType"
                 value={form.bodyType}
@@ -401,6 +415,7 @@ export default function AdminPage() {
             </Field>
             <Field label="Färg">
               <input
+                className="admin-input"
                 style={s.input}
                 name="color"
                 value={form.color}
@@ -413,6 +428,7 @@ export default function AdminPage() {
 
           <Field label="Beskrivning">
             <textarea
+              className="admin-input"
               style={{ ...s.input, minHeight: "100px", resize: "vertical" }}
               name="description"
               value={form.description}
@@ -713,6 +729,7 @@ export default function AdminPage() {
                 <form onSubmit={handleReply} style={s.replyForm}>
                   <label style={s.label}>Skriv ett svar</label>
                   <textarea
+                    className="admin-input"
                     style={{ ...s.input, minHeight: "90px", resize: "vertical" }}
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
@@ -750,9 +767,11 @@ function Field({ label, children }) {
 
 const s = {
   page: {
-    padding: "2rem 1rem",
+    padding: "2rem 1rem 4rem",
     maxWidth: "1100px",
     margin: "0 auto",
+    backgroundColor: "#0a0e27",
+    minHeight: "calc(100vh - 68px)",
   },
   section: {
     marginBottom: "3rem",
@@ -762,29 +781,31 @@ const s = {
     alignItems: "center",
     gap: "0.75rem",
     marginBottom: "1.25rem",
-    paddingBottom: "0.5rem",
-    borderBottom: "2px solid #e3ded7",
+    paddingBottom: "0.6rem",
+    borderBottom: "1px solid rgba(201,169,97,0.15)",
   },
   sectionTitle: {
-    fontSize: "1.4rem",
+    fontSize: "1.3rem",
     fontWeight: 700,
-    color: "#285570",
+    color: "#ffffff",
     margin: 0,
+    letterSpacing: "-0.01em",
   },
   sectionTitleBorder: {
     display: "block",
     marginBottom: "1.25rem",
-    paddingBottom: "0.5rem",
-    borderBottom: "2px solid #e3ded7",
+    paddingBottom: "0.6rem",
+    borderBottom: "1px solid rgba(201,169,97,0.15)",
   },
   unreadBadge: {
-    backgroundColor: "#e8a000",
-    color: "#ffffff",
+    backgroundColor: "rgba(201,169,97,0.15)",
+    color: "#c9a961",
     fontSize: "0.72rem",
     fontWeight: 700,
     borderRadius: "20px",
     padding: "0.2rem 0.65rem",
     letterSpacing: "0.02em",
+    border: "1px solid rgba(201,169,97,0.25)",
   },
 
   // ── Messages list ──
@@ -798,8 +819,8 @@ const s = {
     gridTemplateColumns: "160px 1fr 160px",
     gap: "1rem",
     alignItems: "center",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e3ded7",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(255,255,255,0.06)",
     borderRadius: "8px",
     padding: "0.85rem 1rem",
     cursor: "pointer",
@@ -810,7 +831,7 @@ const s = {
   },
   msgRowUnread: {
     borderLeftWidth: "3px",
-    borderLeftColor: "#285570",
+    borderLeftColor: "#c9a961",
   },
   msgLeft: {
     display: "flex",
@@ -821,21 +842,21 @@ const s = {
   msgName: {
     fontSize: "0.9rem",
     fontWeight: 600,
-    color: "#285570",
+    color: "#e0e0e0",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   msgEmail: {
     fontSize: "0.78rem",
-    color: "#cbcac7",
+    color: "#6b6b7e",
     whiteSpace: "nowrap",
     overflow: "hidden",
     textOverflow: "ellipsis",
   },
   msgPreview: {
     fontSize: "0.85rem",
-    color: "#333333",
+    color: "#a0a0b0",
     margin: 0,
     overflow: "hidden",
     display: "-webkit-box",
@@ -850,7 +871,7 @@ const s = {
   },
   msgDate: {
     fontSize: "0.75rem",
-    color: "#cbcac7",
+    color: "#6b6b7e",
     whiteSpace: "nowrap",
   },
   statusBadge: {
@@ -862,19 +883,20 @@ const s = {
     whiteSpace: "nowrap",
   },
   statusReplied: {
-    backgroundColor: "#e6f2f8",
-    color: "#285570",
+    backgroundColor: "rgba(201,169,97,0.1)",
+    color: "#c9a961",
   },
   statusPending: {
-    backgroundColor: "#fff3e0",
-    color: "#e8a000",
+    backgroundColor: "rgba(251,191,36,0.1)",
+    color: "#fbbf24",
   },
 
   // ── Modal ──
   overlay: {
     position: "fixed",
     inset: 0,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(5,8,20,0.8)",
+    backdropFilter: "blur(4px)",
     zIndex: 500,
     display: "flex",
     alignItems: "center",
@@ -882,9 +904,10 @@ const s = {
     padding: "1rem",
   },
   modal: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(201,169,97,0.2)",
     borderRadius: "12px",
-    boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+    boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
     width: "100%",
     maxWidth: "560px",
     maxHeight: "90vh",
@@ -895,17 +918,17 @@ const s = {
     alignItems: "flex-start",
     justifyContent: "space-between",
     padding: "1.25rem 1.5rem",
-    borderBottom: "1px solid #e3ded7",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
   },
   modalTitle: {
     fontSize: "1rem",
     fontWeight: 700,
-    color: "#285570",
+    color: "#ffffff",
     margin: 0,
   },
   modalMeta: {
     fontSize: "0.78rem",
-    color: "#cbcac7",
+    color: "#6b6b7e",
     marginTop: "2px",
   },
   closeBtn: {
@@ -913,7 +936,7 @@ const s = {
     border: "none",
     fontSize: "1.5rem",
     lineHeight: 1,
-    color: "#cbcac7",
+    color: "#6b6b7e",
     cursor: "pointer",
     padding: "0 0 0 1rem",
     flexShrink: 0,
@@ -928,7 +951,8 @@ const s = {
     display: "flex",
     flexDirection: "column",
     gap: "0.5rem",
-    backgroundColor: "#faf7f6",
+    backgroundColor: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.06)",
     borderRadius: "8px",
     padding: "0.85rem 1rem",
   },
@@ -940,7 +964,7 @@ const s = {
   senderLabel: {
     fontSize: "0.72rem",
     fontWeight: 700,
-    color: "#cbcac7",
+    color: "rgba(201,169,97,0.5)",
     textTransform: "uppercase",
     letterSpacing: "0.06em",
     minWidth: "56px",
@@ -948,7 +972,7 @@ const s = {
   },
   senderValue: {
     fontSize: "0.9rem",
-    color: "#333333",
+    color: "#e0e0e0",
   },
   msgBox: {
     display: "flex",
@@ -958,20 +982,21 @@ const s = {
   msgBoxLabel: {
     fontSize: "0.72rem",
     fontWeight: 700,
-    color: "#cbcac7",
+    color: "rgba(201,169,97,0.5)",
     textTransform: "uppercase",
     letterSpacing: "0.06em",
     margin: 0,
   },
   msgBoxText: {
     fontSize: "0.92rem",
-    color: "#333333",
+    color: "#e0e0e0",
     lineHeight: 1.6,
     margin: 0,
     whiteSpace: "pre-wrap",
   },
   replyBox: {
-    backgroundColor: "#e6f2f8",
+    backgroundColor: "rgba(201,169,97,0.06)",
+    border: "1px solid rgba(201,169,97,0.15)",
     borderRadius: "8px",
     padding: "0.85rem 1rem",
     display: "flex",
@@ -981,14 +1006,14 @@ const s = {
   replyBoxLabel: {
     fontSize: "0.72rem",
     fontWeight: 700,
-    color: "#285570",
+    color: "rgba(201,169,97,0.6)",
     textTransform: "uppercase",
     letterSpacing: "0.06em",
     margin: 0,
   },
   replyBoxText: {
     fontSize: "0.9rem",
-    color: "#285570",
+    color: "#c9a961",
     lineHeight: 1.6,
     margin: 0,
     whiteSpace: "pre-wrap",
@@ -1004,8 +1029,8 @@ const s = {
     display: "flex",
     flexDirection: "column",
     gap: "1rem",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e3ded7",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(201,169,97,0.12)",
     borderRadius: "10px",
     padding: "1.5rem",
   },
@@ -1015,45 +1040,46 @@ const s = {
     gap: "1rem",
   },
   label: {
-    fontSize: "0.8rem",
+    fontSize: "0.78rem",
     fontWeight: 600,
-    color: "#285570",
+    color: "rgba(201,169,97,0.6)",
     textTransform: "uppercase",
-    letterSpacing: "0.04em",
+    letterSpacing: "0.05em",
   },
   input: {
-    border: "1px solid #cbcac7",
+    border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: "8px",
     padding: "0.55rem 0.75rem",
     fontSize: "0.95rem",
-    color: "#333333",
-    backgroundColor: "#faf7f6",
+    color: "#e0e0e0",
+    backgroundColor: "#1a1f3a",
     outline: "none",
     width: "100%",
     fontFamily: "inherit",
     boxSizing: "border-box",
+    transition: "border-color 0.18s, background 0.18s",
   },
   dropZone: {
-    border: "2px dashed #cbcac7",
+    border: "2px dashed rgba(201,169,97,0.2)",
     borderRadius: "8px",
     padding: "1.5rem 1rem",
     textAlign: "center",
     cursor: "pointer",
-    backgroundColor: "#faf7f6",
+    backgroundColor: "rgba(201,169,97,0.03)",
     transition: "border-color 0.2s, background-color 0.2s",
   },
   dropZoneActive: {
-    borderColor: "#285570",
-    backgroundColor: "#e3ded7",
+    borderColor: "#c9a961",
+    backgroundColor: "rgba(201,169,97,0.08)",
   },
   dropText: {
-    color: "#cbcac7",
+    color: "#6b6b7e",
     fontSize: "0.9rem",
     pointerEvents: "none",
   },
   imgHint: {
     fontSize: "0.78rem",
-    color: "#cbcac7",
+    color: "#6b6b7e",
     margin: 0,
   },
   imgGrid: {
@@ -1066,16 +1092,16 @@ const s = {
     width: "130px",
     borderWidth: "2px",
     borderStyle: "solid",
-    borderColor: "#e3ded7",
+    borderColor: "rgba(255,255,255,0.08)",
     borderRadius: "8px",
     overflow: "hidden",
-    backgroundColor: "#faf7f6",
+    backgroundColor: "#1a1f3a",
     cursor: "grab",
     userSelect: "none",
   },
   imgCardOver: {
-    borderColor: "#285570",
-    boxShadow: "0 0 0 2px #28557044",
+    borderColor: "#c9a961",
+    boxShadow: "0 0 0 2px rgba(201,169,97,0.25)",
   },
   imgCardImg: {
     width: "130px",
@@ -1088,8 +1114,8 @@ const s = {
     bottom: "28px",
     left: 0,
     right: 0,
-    backgroundColor: "#285570",
-    color: "#ffffff",
+    backgroundColor: "#c9a961",
+    color: "#0a0e27",
     fontSize: "0.65rem",
     fontWeight: 700,
     textAlign: "center",
@@ -1104,7 +1130,7 @@ const s = {
     height: "20px",
     borderRadius: "50%",
     border: "none",
-    backgroundColor: "rgba(0,0,0,0.55)",
+    backgroundColor: "rgba(0,0,0,0.65)",
     color: "#ffffff",
     fontSize: "14px",
     lineHeight: "18px",
@@ -1117,13 +1143,13 @@ const s = {
   },
   arrowRow: {
     display: "flex",
-    borderTop: "1px solid #e3ded7",
+    borderTop: "1px solid rgba(255,255,255,0.06)",
   },
   arrowBtn: {
     flex: 1,
     border: "none",
-    backgroundColor: "#faf7f6",
-    color: "#285570",
+    backgroundColor: "#1a1f3a",
+    color: "#c9a961",
     fontSize: "1rem",
     padding: "4px 0",
     cursor: "pointer",
@@ -1131,14 +1157,14 @@ const s = {
   },
   progressOuter: {
     position: "relative",
-    backgroundColor: "#e3ded7",
+    backgroundColor: "rgba(255,255,255,0.08)",
     borderRadius: "4px",
     height: "8px",
     overflow: "visible",
   },
   progressInner: {
     height: "100%",
-    backgroundColor: "#285570",
+    backgroundColor: "#c9a961",
     borderRadius: "4px",
     transition: "width 0.3s",
   },
@@ -1147,7 +1173,7 @@ const s = {
     top: "10px",
     left: 0,
     fontSize: "0.75rem",
-    color: "#285570",
+    color: "#c9a961",
   },
   formActions: {
     display: "flex",
@@ -1156,38 +1182,41 @@ const s = {
     marginTop: "0.5rem",
   },
   submitBtn: {
-    backgroundColor: "#285570",
-    color: "#ffffff",
+    backgroundColor: "#c9a961",
+    color: "#0a0e27",
     border: "none",
     borderRadius: "8px",
     padding: "0.65rem 1.5rem",
     fontSize: "0.95rem",
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: "pointer",
     fontFamily: "inherit",
+    letterSpacing: "0.02em",
+    transition: "opacity 0.18s",
   },
   cancelBtn: {
     backgroundColor: "transparent",
-    color: "#285570",
-    border: "1px solid #285570",
+    color: "#c9a961",
+    border: "1px solid rgba(201,169,97,0.3)",
     borderRadius: "8px",
     padding: "0.65rem 1.25rem",
     fontSize: "0.95rem",
     fontWeight: 600,
     cursor: "pointer",
     fontFamily: "inherit",
+    transition: "border-color 0.18s",
   },
   errorMsg: {
-    color: "#b00020",
+    color: "#ef4444",
     fontSize: "0.9rem",
-    backgroundColor: "#fff0f0",
-    border: "1px solid #f5c6cb",
+    backgroundColor: "rgba(239,68,68,0.08)",
+    border: "1px solid rgba(239,68,68,0.2)",
     borderRadius: "6px",
     padding: "0.6rem 0.9rem",
     margin: 0,
   },
   statusText: {
-    color: "#cbcac7",
+    color: "#6b6b7e",
     fontSize: "0.95rem",
   },
   carGrid: {
@@ -1198,15 +1227,15 @@ const s = {
   carCard: {
     display: "flex",
     flexDirection: "column",
-    backgroundColor: "#ffffff",
-    border: "1px solid #e3ded7",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(255,255,255,0.06)",
     borderRadius: "8px",
     overflow: "hidden",
   },
   thumb: {
     width: "100%",
     aspectRatio: "16/9",
-    backgroundColor: "#e3ded7",
+    backgroundColor: "#1a1f3a",
     overflow: "hidden",
   },
   thumbImg: {
@@ -1221,7 +1250,7 @@ const s = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#cbcac7",
+    color: "#6b6b7e",
     fontSize: "0.8rem",
   },
   carInfo: {
@@ -1230,42 +1259,44 @@ const s = {
   },
   carTitle: {
     fontWeight: 600,
-    color: "#285570",
+    color: "#e0e0e0",
     fontSize: "0.95rem",
     marginBottom: "0.2rem",
   },
   carMeta: {
     fontSize: "0.85rem",
-    color: "#cbcac7",
+    color: "#6b6b7e",
   },
   carActions: {
     display: "flex",
     gap: "0.5rem",
     padding: "0.75rem 1rem",
-    borderTop: "1px solid #e3ded7",
+    borderTop: "1px solid rgba(255,255,255,0.06)",
   },
   editBtn: {
     flex: 1,
-    backgroundColor: "#285570",
-    color: "#ffffff",
+    backgroundColor: "#c9a961",
+    color: "#0a0e27",
     border: "none",
     borderRadius: "6px",
     padding: "0.45rem 0",
     fontSize: "0.85rem",
-    fontWeight: 600,
+    fontWeight: 700,
     cursor: "pointer",
     fontFamily: "inherit",
+    transition: "opacity 0.18s",
   },
   deleteBtn: {
     flex: 1,
     backgroundColor: "transparent",
-    color: "#b00020",
-    border: "1px solid #b00020",
+    color: "#ef4444",
+    border: "1px solid rgba(239,68,68,0.3)",
     borderRadius: "6px",
     padding: "0.45rem 0",
     fontSize: "0.85rem",
     fontWeight: 600,
     cursor: "pointer",
     fontFamily: "inherit",
+    transition: "border-color 0.18s",
   },
 };

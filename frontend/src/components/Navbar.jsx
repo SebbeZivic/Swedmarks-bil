@@ -2,22 +2,18 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
+const CAR_CATEGORIES = [
+  { label: "Alla bilar",     sub: "Hela sortimentet",   bodyType: null },
+  { label: "SUV & Jeep",    sub: "Rymliga och robusta", bodyType: "SUV" },
+  { label: "Sedan",          sub: "Klassisk komfort",    bodyType: "Sedan" },
+  { label: "Kombi",          sub: "Praktisk vardag",     bodyType: "Kombi" },
+  { label: "Elbil & Hybrid", sub: "Framtidens teknik",  bodyType: "Hybrid" },
+];
+
 function ChevronIcon({ rotated }) {
   return (
-    <svg
-      width="11"
-      height="11"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      style={{
-        display: "inline-block",
-        flexShrink: 0,
-        transition: "transform 0.22s ease",
-        transform: rotated ? "rotate(180deg)" : "rotate(0deg)",
-      }}
-    >
+    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+      style={{ flexShrink: 0, transition: "transform 0.22s ease", transform: rotated ? "rotate(180deg)" : "rotate(0deg)" }}>
       <polyline points="6 9 12 15 18 9" />
     </svg>
   );
@@ -33,39 +29,21 @@ function HeartNavIcon() {
 
 function HamburgerIcon({ open }) {
   const bar = (extra) => ({
-    display: "block",
-    position: "absolute",
-    left: 0,
-    width: "22px",
-    height: "2px",
-    backgroundColor: "#ffffff",
+    display: "block", position: "absolute", left: 0,
+    width: "22px", height: "2px",
+    backgroundColor: "#c9a961",
     borderRadius: "2px",
     transition: "transform 0.25s ease, opacity 0.25s ease",
     ...extra,
   });
-
   return (
-    <span
-      style={{ position: "relative", display: "block", width: "22px", height: "16px" }}
-    >
-      <span
-        style={bar({ top: 0, transform: open ? "translateY(7px) rotate(45deg)" : "none" })}
-      />
+    <span style={{ position: "relative", display: "block", width: "22px", height: "16px" }}>
+      <span style={bar({ top: 0, transform: open ? "translateY(7px) rotate(45deg)" : "none" })} />
       <span style={bar({ top: "7px", opacity: open ? 0 : 1 })} />
-      <span
-        style={bar({ top: "14px", transform: open ? "translateY(-7px) rotate(-45deg)" : "none" })}
-      />
+      <span style={bar({ top: "14px", transform: open ? "translateY(-7px) rotate(-45deg)" : "none" })} />
     </span>
   );
 }
-
-const CAR_CATEGORIES = [
-  { label: "Alla bilar",     sub: "Hela sortimentet",    bodyType: null },
-  { label: "SUV & Jeep",    sub: "Rymliga och robusta",  bodyType: "SUV" },
-  { label: "Sedan",          sub: "Klassisk komfort",     bodyType: "Sedan" },
-  { label: "Kombi",          sub: "Praktisk vardag",      bodyType: "Kombi" },
-  { label: "Elbil & Hybrid", sub: "Framtidens teknik",   bodyType: "Hybrid" },
-];
 
 export default function Navbar() {
   const { user } = useAuth();
@@ -86,9 +64,7 @@ export default function Navbar() {
   useEffect(() => {
     if (!dropdownOpen) return;
     function handleClick(e) {
-      if (triggerRef.current && !triggerRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-      }
+      if (triggerRef.current && !triggerRef.current.contains(e.target)) setDropdownOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
@@ -99,19 +75,11 @@ export default function Navbar() {
     onMouseLeave: () => setHovered(null),
   });
 
-  function closeDropdown() {
-    setDropdownOpen(false);
-    setHovered(null);
-  }
-
   function handleSearchChange(e) {
     const val = e.target.value;
     setSearchValue(val);
-    if (val.trim()) {
-      navigate(`/?search=${encodeURIComponent(val.trim())}`, { replace: true });
-    } else {
-      navigate("/", { replace: true });
-    }
+    if (val.trim()) navigate(`/?search=${encodeURIComponent(val.trim())}`, { replace: true });
+    else navigate("/", { replace: true });
   }
 
   function clearSearch() {
@@ -119,65 +87,56 @@ export default function Navbar() {
     navigate("/", { replace: true });
   }
 
+  const navLinkStyle = (key) => ({
+    ...s.navLink,
+    ...(hovered === key ? s.navLinkHover : {}),
+  });
+
   return (
     <>
       <style>{`
         @keyframes dd-in {
-          from { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+          from { opacity: 0; transform: translateX(-50%) translateY(-8px); }
           to   { opacity: 1; transform: translateX(-50%) translateY(0); }
         }
-        .nav-search-input::placeholder { color: rgba(255,255,255,0.38); }
-        .nav-search-input:focus { border-color: rgba(255,255,255,0.4) !important; background: rgba(255,255,255,0.16) !important; }
-        .mobile-search-input::placeholder { color: rgba(255,255,255,0.38); }
-        .mobile-search-input:focus { outline: none; border-color: rgba(255,255,255,0.35) !important; }
+        .nav-search::placeholder { color: rgba(201,169,97,0.35); }
+        .nav-search:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.07) !important; }
+        .mob-search::placeholder { color: rgba(201,169,97,0.35); }
+        .mob-search:focus { outline: none; border-color: rgba(201,169,97,0.4) !important; }
       `}</style>
 
-      <header style={styles.header}>
-        <div style={isMobile ? styles.navMobile : styles.navDesktop}>
-          <Link to="/" style={styles.logo}>
-            Swedmarks<span style={styles.logoThin}> Bil</span>
+      <header style={s.header}>
+        <div style={isMobile ? s.navMobile : s.navDesktop}>
+          <Link to="/" style={s.logo}>
+            Swedmarks<span style={s.logoGold}> Bil</span>
           </Link>
 
           {!isMobile && (
-            <nav style={styles.centerLinks}>
+            <nav style={s.centerLinks}>
               <div ref={triggerRef} style={{ position: "relative" }}>
                 <button
-                  style={{
-                    ...styles.navBtn,
-                    backgroundColor: dropdownOpen
-                      ? "rgba(255,255,255,0.08)"
-                      : "transparent",
-                    color: "#ffffff",
-                  }}
+                  style={{ ...s.navBtn, ...(dropdownOpen ? { color: "#c9a961" } : {}) }}
                   onClick={() => setDropdownOpen((o) => !o)}
                   onMouseEnter={() => setDropdownOpen(true)}
                   aria-expanded={dropdownOpen}
-                  aria-haspopup="true"
                 >
-                  Bilar
-                  <ChevronIcon rotated={dropdownOpen} />
+                  Bilar <ChevronIcon rotated={dropdownOpen} />
                 </button>
 
                 {dropdownOpen && (
-                  <div
-                    style={styles.dropdownWrapper}
-                    onMouseLeave={closeDropdown}
-                  >
-                    <div style={styles.dropdownCard}>
-                      <p style={styles.dropdownHeading}>Välj karosstyp</p>
+                  <div style={s.dropdownWrapper} onMouseLeave={() => { setDropdownOpen(false); setHovered(null); }}>
+                    <div style={s.dropdownCard}>
+                      <p style={s.dropdownHeading}>Välj karosstyp</p>
                       {CAR_CATEGORIES.map((cat, i) => (
                         <Link
                           key={cat.label}
                           to={cat.bodyType ? `/?bodyType=${cat.bodyType}` : "/"}
-                          onClick={closeDropdown}
-                          style={{
-                            ...styles.dropdownItem,
-                            ...(hovered === `cat${i}` ? styles.dropdownItemHover : {}),
-                          }}
+                          onClick={() => setDropdownOpen(false)}
+                          style={{ ...s.dropdownItem, ...(hovered === `cat${i}` ? s.dropdownItemHover : {}) }}
                           {...hover(`cat${i}`)}
                         >
-                          <span style={styles.dropdownItemLabel}>{cat.label}</span>
-                          <span style={styles.dropdownItemSub}>{cat.sub}</span>
+                          <span style={s.dropdownLabel}>{cat.label}</span>
+                          <span style={s.dropdownSub}>{cat.sub}</span>
                         </Link>
                       ))}
                     </div>
@@ -185,83 +144,37 @@ export default function Navbar() {
                 )}
               </div>
 
-              <Link
-                to="/"
-                style={{
-                  ...styles.navLink,
-                  ...(hovered === "catalog" ? styles.navLinkHover : {}),
-                }}
-                {...hover("catalog")}
-              >
-                Katalog
-              </Link>
+              <Link to="/" style={navLinkStyle("catalog")} {...hover("catalog")}>Katalog</Link>
 
               <Link
                 to="/favorites"
-                style={{
-                  ...styles.navLink,
-                  ...(hovered === "favorites" ? styles.navLinkHover : {}),
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "5px",
-                }}
+                style={{ ...navLinkStyle("favorites"), display: "inline-flex", alignItems: "center", gap: "5px" }}
                 {...hover("favorites")}
               >
-                <HeartNavIcon />
-                Favoriter
+                <HeartNavIcon /> Favoriter
               </Link>
 
-              <Link
-                to="/contact"
-                style={{
-                  ...styles.navLink,
-                  ...(hovered === "contact" ? styles.navLinkHover : {}),
-                }}
-                {...hover("contact")}
-              >
-                Kontakt
-              </Link>
+              <Link to="/contact" style={navLinkStyle("contact")} {...hover("contact")}>Kontakt</Link>
             </nav>
           )}
 
           {!isMobile && (
-            <div style={styles.rightActions}>
-              <div style={styles.searchWrap}>
-                <svg
-                  style={styles.searchIconEl}
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.5)"
-                  strokeWidth="2.5"
-                >
-                  <circle cx="11" cy="11" r="8" />
-                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <div style={s.rightActions}>
+              <div style={s.searchWrap}>
+                <svg style={s.searchIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="rgba(201,169,97,0.45)" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 <input
-                  className="nav-search-input"
-                  style={styles.searchInput}
+                  className="nav-search"
+                  style={s.searchInput}
                   placeholder="Sök bil..."
                   value={searchValue}
                   onChange={handleSearchChange}
                 />
                 {searchValue && (
-                  <button
-                    style={styles.clearBtn}
-                    onClick={clearSearch}
-                    aria-label="Rensa sökning"
-                  >
-                    <svg
-                      width="10"
-                      height="10"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="rgba(255,255,255,0.65)"
-                      strokeWidth="2.5"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
+                  <button style={s.clearBtn} onClick={clearSearch} aria-label="Rensa">
+                    <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="rgba(201,169,97,0.6)" strokeWidth="2.5">
+                      <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
                     </svg>
                   </button>
                 )}
@@ -270,23 +183,11 @@ export default function Navbar() {
               {user ? (
                 <>
                   {user.isAdmin && (
-                    <Link
-                      to="/admin"
-                      style={{
-                        ...styles.navLink,
-                        ...(hovered === "admin" ? styles.navLinkHover : {}),
-                      }}
-                      {...hover("admin")}
-                    >
-                      Admin
-                    </Link>
+                    <Link to="/admin" style={navLinkStyle("admin")} {...hover("admin")}>Admin</Link>
                   )}
                   <Link
                     to="/logout"
-                    style={{
-                      ...styles.ghostBtn,
-                      ...(hovered === "logout" ? styles.ghostBtnHover : {}),
-                    }}
+                    style={{ ...s.ghostBtn, ...(hovered === "logout" ? s.ghostBtnHover : {}) }}
                     {...hover("logout")}
                   >
                     Logga ut
@@ -295,10 +196,7 @@ export default function Navbar() {
               ) : (
                 <Link
                   to="/login"
-                  style={{
-                    ...styles.loginBtn,
-                    ...(hovered === "login" ? styles.loginBtnHover : {}),
-                  }}
+                  style={{ ...s.loginBtn, ...(hovered === "login" ? s.loginBtnHover : {}) }}
                   {...hover("login")}
                 >
                   Logga in
@@ -308,108 +206,54 @@ export default function Navbar() {
           )}
 
           {isMobile && (
-            <button
-              style={styles.hamburgerBtn}
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-label={menuOpen ? "Stäng meny" : "Öppna meny"}
-              aria-expanded={menuOpen}
-            >
+            <button style={s.hamburgerBtn} onClick={() => setMenuOpen((o) => !o)} aria-label="Meny">
               <HamburgerIcon open={menuOpen} />
             </button>
           )}
         </div>
 
         {isMobile && (
-          <div
-            style={{
-              ...styles.mobileMenu,
-              maxHeight: menuOpen ? "560px" : "0",
-              opacity: menuOpen ? 1 : 0,
-              overflow: "hidden",
-              transition: "max-height 0.32s ease, opacity 0.22s ease",
-            }}
-          >
-            <div style={styles.mobileSearchWrap}>
-              <svg
-                style={styles.mobileSearchIcon}
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="rgba(255,255,255,0.5)"
-                strokeWidth="2.5"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          <div style={{ ...s.mobileMenu, maxHeight: menuOpen ? "600px" : "0", opacity: menuOpen ? 1 : 0, overflow: "hidden", transition: "max-height 0.32s ease, opacity 0.22s ease" }}>
+            <div style={s.mobileSearchWrap}>
+              <svg style={s.mobileSearchIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="rgba(201,169,97,0.4)" strokeWidth="2.5">
+                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input
-                className="mobile-search-input"
-                style={styles.mobileSearchInput}
-                placeholder="Sök bil..."
-                value={searchValue}
-                onChange={handleSearchChange}
-              />
+              <input className="mob-search" style={s.mobileSearchInput} placeholder="Sök bil..." value={searchValue} onChange={handleSearchChange} />
             </div>
 
             {CAR_CATEGORIES.map((cat) => (
-              <Link
-                key={cat.label}
-                to={cat.bodyType ? `/?bodyType=${cat.bodyType}` : "/"}
-                style={styles.mobileLink}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span style={styles.mobileLinkLabel}>{cat.label}</span>
-                <span style={styles.mobileLinkSub}>{cat.sub}</span>
+              <Link key={cat.label} to={cat.bodyType ? `/?bodyType=${cat.bodyType}` : "/"} style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+                <span style={s.mobileLinkLabel}>{cat.label}</span>
+                <span style={s.mobileLinkSub}>{cat.sub}</span>
               </Link>
             ))}
 
-            <div style={styles.mobileDivider} />
+            <div style={s.mobileDivider} />
 
-            <Link
-              to="/favorites"
-              style={styles.mobileLink}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span style={{ ...styles.mobileLinkLabel, display: "flex", alignItems: "center", gap: "6px" }}>
-                <HeartNavIcon />
-                Favoriter
+            <Link to="/favorites" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+              <span style={{ ...s.mobileLinkLabel, display: "flex", alignItems: "center", gap: "6px" }}>
+                <HeartNavIcon /> Favoriter
               </span>
             </Link>
 
-            <Link
-              to="/contact"
-              style={styles.mobileLink}
-              onClick={() => setMenuOpen(false)}
-            >
-              <span style={styles.mobileLinkLabel}>Kontakt</span>
+            <Link to="/contact" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+              <span style={s.mobileLinkLabel}>Kontakt</span>
             </Link>
 
             {user ? (
               <>
                 {user.isAdmin && (
-                  <Link
-                    to="/admin"
-                    style={styles.mobileLink}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <span style={styles.mobileLinkLabel}>Admin</span>
+                  <Link to="/admin" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+                    <span style={{ ...s.mobileLinkLabel, color: "#c9a961" }}>Admin</span>
                   </Link>
                 )}
-                <Link
-                  to="/logout"
-                  style={{ ...styles.mobileLink, opacity: 0.55 }}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  <span style={styles.mobileLinkLabel}>Logga ut</span>
+                <Link to="/logout" style={{ ...s.mobileLink, opacity: 0.55 }} onClick={() => setMenuOpen(false)}>
+                  <span style={s.mobileLinkLabel}>Logga ut</span>
                 </Link>
               </>
             ) : (
-              <Link
-                to="/login"
-                style={styles.mobileLink}
-                onClick={() => setMenuOpen(false)}
-              >
-                <span style={styles.mobileLinkLabel}>Logga in</span>
+              <Link to="/login" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+                <span style={{ ...s.mobileLinkLabel, color: "#c9a961" }}>Logga in</span>
               </Link>
             )}
           </div>
@@ -419,15 +263,15 @@ export default function Navbar() {
   );
 }
 
-const styles = {
+const s = {
   header: {
-    backgroundColor: "#285570",
+    backgroundColor: "#0a0e27",
+    borderBottom: "1px solid rgba(201,169,97,0.18)",
     position: "sticky",
     top: 0,
     zIndex: 100,
-    boxShadow: "0 2px 16px rgba(0,0,0,0.18)",
+    boxShadow: "0 4px 24px rgba(0,0,0,0.4)",
   },
-
   navDesktop: {
     maxWidth: "1200px",
     margin: "0 auto",
@@ -437,7 +281,6 @@ const styles = {
     gridTemplateColumns: "1fr auto 1fr",
     alignItems: "center",
   },
-
   navMobile: {
     padding: "0 1rem",
     height: "60px",
@@ -445,90 +288,84 @@ const styles = {
     alignItems: "center",
     justifyContent: "space-between",
   },
-
   logo: {
-    fontSize: "1.25rem",
+    fontSize: "1.3rem",
     fontWeight: 800,
     color: "#ffffff",
     textDecoration: "none",
-    letterSpacing: "-0.03em",
+    letterSpacing: "-0.02em",
     justifySelf: "start",
   },
-  logoThin: {
+  logoGold: {
+    color: "#c9a961",
     fontWeight: 300,
-    opacity: 0.75,
   },
-
   centerLinks: {
     display: "flex",
     alignItems: "center",
-    gap: "0.15rem",
+    gap: "0.1rem",
     justifyContent: "center",
   },
-
   navLink: {
-    color: "rgba(255,255,255,0.78)",
+    color: "rgba(224,224,224,0.72)",
     textDecoration: "none",
-    fontSize: "0.9rem",
+    fontSize: "0.875rem",
     fontWeight: 500,
-    padding: "0.45rem 0.8rem",
+    padding: "0.45rem 0.85rem",
     borderRadius: "6px",
-    transition: "color 0.15s, background-color 0.15s",
+    transition: "color 0.18s",
     display: "inline-block",
+    letterSpacing: "0.01em",
   },
   navLinkHover: {
-    color: "#ffffff",
-    backgroundColor: "rgba(255,255,255,0.12)",
+    color: "#c9a961",
   },
-
   navBtn: {
     background: "none",
     border: "none",
     outline: "none",
     WebkitTapHighlightColor: "transparent",
-    color: "rgba(255,255,255,0.78)",
-    fontSize: "0.9rem",
+    color: "rgba(224,224,224,0.72)",
+    fontSize: "0.875rem",
     fontWeight: 500,
-    padding: "0.45rem 0.8rem",
+    padding: "0.45rem 0.85rem",
     borderRadius: "6px",
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
     gap: "5px",
     fontFamily: "inherit",
-    transition: "color 0.15s, background-color 0.15s",
+    transition: "color 0.18s",
   },
-
   rightActions: {
     display: "flex",
     alignItems: "center",
-    gap: "0.5rem",
+    gap: "0.4rem",
     justifyContent: "flex-end",
   },
-
   searchWrap: {
     position: "relative",
     display: "flex",
     alignItems: "center",
   },
-  searchInput: {
-    width: "170px",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    border: "1px solid rgba(255,255,255,0.18)",
-    borderRadius: "20px",
-    padding: "0.35rem 1.8rem 0.35rem 2rem",
-    fontSize: "0.82rem",
-    color: "#ffffff",
-    outline: "none",
-    fontFamily: "inherit",
-    transition: "border-color 0.15s, background-color 0.15s",
-  },
-  searchIconEl: {
+  searchIcon: {
     position: "absolute",
     left: "0.65rem",
     top: "50%",
     transform: "translateY(-50%)",
     pointerEvents: "none",
+  },
+  searchInput: {
+    width: "160px",
+    backgroundColor: "rgba(201,169,97,0.07)",
+    border: "1px solid rgba(201,169,97,0.18)",
+    borderRadius: "20px",
+    padding: "0.35rem 1.8rem 0.35rem 2rem",
+    fontSize: "0.82rem",
+    color: "#e0e0e0",
+    outline: "none",
+    fontFamily: "inherit",
+    transition: "border-color 0.18s, background-color 0.18s",
   },
   clearBtn: {
     position: "absolute",
@@ -542,90 +379,91 @@ const styles = {
     cursor: "pointer",
     display: "flex",
     alignItems: "center",
-    WebkitTapHighlightColor: "transparent",
   },
-
   ghostBtn: {
-    color: "rgba(255,255,255,0.8)",
+    color: "rgba(201,169,97,0.8)",
     textDecoration: "none",
-    fontSize: "0.85rem",
+    fontSize: "0.82rem",
     fontWeight: 600,
-    padding: "0.4rem 0.9rem",
-    border: "1px solid rgba(255,255,255,0.3)",
-    borderRadius: "7px",
+    padding: "0.38rem 0.85rem",
+    border: "1px solid rgba(201,169,97,0.3)",
+    borderRadius: "6px",
     display: "inline-block",
-    transition: "color 0.15s, border-color 0.15s",
+    transition: "color 0.18s, border-color 0.18s",
     cursor: "pointer",
+    letterSpacing: "0.01em",
   },
   ghostBtnHover: {
-    color: "#ffffff",
-    borderColor: "rgba(255,255,255,0.65)",
+    color: "#c9a961",
+    borderColor: "rgba(201,169,97,0.65)",
   },
-
   loginBtn: {
-    backgroundColor: "#ffffff",
-    color: "#285570",
+    backgroundColor: "#c9a961",
+    color: "#0a0e27",
     textDecoration: "none",
-    fontSize: "0.875rem",
+    fontSize: "0.82rem",
     fontWeight: 700,
-    padding: "0.45rem 1.15rem",
-    borderRadius: "7px",
+    padding: "0.42rem 1.1rem",
+    borderRadius: "6px",
     border: "none",
     display: "inline-block",
-    transition: "opacity 0.15s",
+    transition: "opacity 0.18s",
     cursor: "pointer",
+    letterSpacing: "0.02em",
   },
   loginBtnHover: {
-    opacity: 0.88,
+    opacity: 0.85,
   },
 
+  // Dropdown
   dropdownWrapper: {
     position: "absolute",
-    top: "calc(100% + 10px)",
+    top: "calc(100% + 12px)",
     left: "50%",
     transform: "translateX(-50%)",
     zIndex: 200,
     animation: "dd-in 0.18s ease both",
   },
   dropdownCard: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(201,169,97,0.2)",
     borderRadius: "12px",
-    boxShadow: "0 12px 40px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06)",
+    boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
     minWidth: "240px",
     padding: "0.5rem",
-    overflow: "hidden",
   },
   dropdownHeading: {
-    fontSize: "0.68rem",
+    fontSize: "0.65rem",
     fontWeight: 700,
-    color: "#cbcac7",
+    color: "rgba(201,169,97,0.5)",
     textTransform: "uppercase",
-    letterSpacing: "0.07em",
+    letterSpacing: "0.08em",
     padding: "0.4rem 0.85rem 0.6rem",
     margin: 0,
   },
   dropdownItem: {
     display: "flex",
     flexDirection: "column",
-    gap: "1px",
+    gap: "2px",
     textDecoration: "none",
     padding: "0.55rem 0.85rem",
     borderRadius: "8px",
     transition: "background-color 0.12s",
   },
   dropdownItemHover: {
-    backgroundColor: "#faf7f6",
+    backgroundColor: "rgba(201,169,97,0.08)",
   },
-  dropdownItemLabel: {
-    fontSize: "0.9rem",
+  dropdownLabel: {
+    fontSize: "0.875rem",
     fontWeight: 600,
-    color: "#285570",
+    color: "#e0e0e0",
   },
-  dropdownItemSub: {
-    fontSize: "0.75rem",
-    color: "#cbcac7",
+  dropdownSub: {
+    fontSize: "0.72rem",
+    color: "#6b6b7e",
   },
 
+  // Hamburger
   hamburgerBtn: {
     background: "none",
     border: "none",
@@ -637,9 +475,10 @@ const styles = {
     alignItems: "center",
   },
 
+  // Mobile menu
   mobileMenu: {
-    backgroundColor: "#285570",
-    borderTop: "1px solid rgba(255,255,255,0.12)",
+    backgroundColor: "#0a0e27",
+    borderTop: "1px solid rgba(201,169,97,0.12)",
     padding: "0.85rem 1.25rem 0.75rem",
   },
   mobileSearchWrap: {
@@ -657,35 +496,35 @@ const styles = {
   },
   mobileSearchInput: {
     width: "100%",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    border: "1px solid rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(201,169,97,0.07)",
+    border: "1px solid rgba(201,169,97,0.18)",
     borderRadius: "20px",
     padding: "0.5rem 1rem 0.5rem 2.25rem",
     fontSize: "0.9rem",
-    color: "#ffffff",
+    color: "#e0e0e0",
     fontFamily: "inherit",
     boxSizing: "border-box",
   },
   mobileLink: {
     display: "flex",
     flexDirection: "column",
-    gap: "1px",
+    gap: "2px",
     textDecoration: "none",
     padding: "0.85rem 0",
-    borderBottom: "1px solid rgba(255,255,255,0.08)",
+    borderBottom: "1px solid rgba(255,255,255,0.06)",
   },
   mobileLinkLabel: {
-    fontSize: "1rem",
+    fontSize: "0.95rem",
     fontWeight: 600,
-    color: "rgba(255,255,255,0.9)",
+    color: "rgba(224,224,224,0.88)",
   },
   mobileLinkSub: {
-    fontSize: "0.78rem",
-    color: "rgba(255,255,255,0.45)",
+    fontSize: "0.75rem",
+    color: "#6b6b7e",
   },
   mobileDivider: {
     height: "1px",
-    backgroundColor: "rgba(255,255,255,0.18)",
+    backgroundColor: "rgba(201,169,97,0.15)",
     margin: "0.5rem 0",
   },
 };

@@ -58,7 +58,8 @@ export default function Footer() {
 
 const styles = {
   footer: {
-    backgroundColor: "#1d2e38",
+    backgroundColor: "#060919",
+    borderTop: "1px solid rgba(201,169,97,0.12)",
   },
   inner: {
     maxWidth: "1200px",
@@ -83,11 +84,11 @@ const styles = {
   },
   logoThin: {
     fontWeight: 300,
-    opacity: 0.65,
+    color: "#c9a961",
   },
   tagline: {
     fontSize: "0.875rem",
-    color: "rgba(255,255,255,0.42)",
+    color: "rgba(255,255,255,0.35)",
     lineHeight: 1.6,
     maxWidth: "230px",
   },
@@ -99,29 +100,29 @@ const styles = {
     gap: "0.5rem",
   },
   colTitle: {
-    fontSize: "0.68rem",
+    fontSize: "0.65rem",
     fontWeight: 700,
-    color: "rgba(255,255,255,0.32)",
+    color: "rgba(201,169,97,0.45)",
     textTransform: "uppercase",
     letterSpacing: "0.1em",
     marginBottom: "0.2rem",
   },
   footerLink: {
     fontSize: "0.875rem",
-    color: "rgba(255,255,255,0.55)",
+    color: "rgba(255,255,255,0.42)",
     textDecoration: "none",
     transition: "color 0.15s",
   },
   footerLinkHov: {
-    color: "#ffffff",
+    color: "#c9a961",
   },
   infoText: {
     fontSize: "0.875rem",
-    color: "rgba(255,255,255,0.42)",
+    color: "rgba(255,255,255,0.35)",
     lineHeight: 1.55,
   },
   bottomWrap: {
-    borderTop: "1px solid rgba(255,255,255,0.07)",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
   },
   bottom: {
     maxWidth: "1200px",
@@ -130,6 +131,6 @@ const styles = {
   },
   copyright: {
     fontSize: "0.78rem",
-    color: "rgba(255,255,255,0.28)",
+    color: "rgba(255,255,255,0.22)",
   },
 };

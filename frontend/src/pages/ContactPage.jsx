@@ -3,28 +3,22 @@ import { createMessage } from "../services/api";
 
 function InfoRow({ label, value }) {
   return (
-    <div style={styles.infoRow}>
-      <span style={styles.infoLabel}>{label}</span>
-      <span style={styles.infoValue}>{value}</span>
+    <div style={s.infoRow}>
+      <span style={s.infoLabel}>{label}</span>
+      <span style={s.infoValue}>{value}</span>
     </div>
   );
 }
 
 export default function ContactPage() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-  });
+  const [form, setForm]       = useState({ name: "", email: "", phone: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState(null);
-  const [btnHovered, setBtnHovered] = useState(false);
 
   function handleChange(e) {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((p) => ({ ...p, [name]: value }));
   }
 
   async function handleSubmit(e) {
@@ -36,129 +30,80 @@ export default function ContactPage() {
       setSubmitted(true);
       setForm({ name: "", email: "", phone: "", message: "" });
     } catch (err) {
-      setSendError(
-        err.message || "Kunde inte skicka meddelandet. Försök igen.",
-      );
+      setSendError(err.message || "Kunde inte skicka meddelandet. Försök igen.");
     } finally {
       setSending(false);
     }
   }
 
   return (
-    <main style={styles.page}>
-      <div style={styles.hero}>
-        <h1 style={styles.heroTitle}>Kontakta oss</h1>
-        <p style={styles.heroSub}>
-          Vi hjälper dig hitta rätt bil. Tveka inte att höra av dig!
-        </p>
+    <main style={s.page}>
+      <style>{`
+        .contact-input::placeholder { color: rgba(160,160,176,0.35); }
+        .contact-input:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.05) !important; outline: none; }
+      `}</style>
+
+      <div style={s.hero}>
+        <h1 style={s.heroTitle}>Kontakta oss</h1>
+        <p style={s.heroSub}>Vi hjälper dig hitta rätt bil. Tveka inte att höra av dig!</p>
       </div>
 
-      <div style={styles.content}>
-        <div style={styles.infoCol}>
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>Swedmarks Bil</h2>
-            <div style={styles.infoList}>
-              <InfoRow label="Adress" value="Birkagatan 5, Helsingborg" />
+      <div style={s.content}>
+        <div style={s.infoCol}>
+          <div style={s.card}>
+            <h2 style={s.cardTitle}>Swedmarks Bil</h2>
+            <div style={s.infoList}>
+              <InfoRow label="Adress"  value="Birkagatan 5, Helsingborg" />
               <InfoRow label="Telefon" value="073-406 06 08" />
-              <InfoRow label="E-post" value="swedmarksbil@gmail.com" />
+              <InfoRow label="E-post"  value="swedmarksbil@gmail.com" />
             </div>
           </div>
 
-          <div style={{ ...styles.card, marginTop: "1.25rem" }}>
-            <h3 style={styles.cardTitle}>Öppettider</h3>
-            <div style={styles.hoursGrid}>
-              <span style={styles.dayLabel}>Måndag–Fredag</span>
-              <span style={styles.timeLabel}>09:00–18:00</span>
-              <span style={styles.dayLabel}>Lördag</span>
-              <span style={styles.timeLabel}>10:00–15:00</span>
-              <span style={styles.dayLabel}>Söndag</span>
-              <span
-                style={{
-                  ...styles.timeLabel,
-                  color: "#cbcac7",
-                  fontWeight: 400,
-                }}
-              >
-                Stängt
-              </span>
+          <div style={{ ...s.card, marginTop: "1.25rem" }}>
+            <h3 style={s.cardTitle}>Öppettider</h3>
+            <div style={s.hoursGrid}>
+              <span style={s.dayLabel}>Måndag–Fredag</span>
+              <span style={s.timeLabel}>09:00–18:00</span>
+              <span style={s.dayLabel}>Lördag</span>
+              <span style={s.timeLabel}>10:00–15:00</span>
+              <span style={s.dayLabel}>Söndag</span>
+              <span style={{ ...s.timeLabel, color: "#6b6b7e", fontWeight: 400 }}>Stängt</span>
             </div>
           </div>
         </div>
 
-        <div style={styles.formCol}>
-          <div style={styles.card}>
-            <h2 style={styles.cardTitle}>Skicka ett meddelande</h2>
+        <div style={s.formCol}>
+          <div style={s.card}>
+            <h2 style={s.cardTitle}>Skicka ett meddelande</h2>
 
             {submitted ? (
-              <div style={styles.successBox}>
-                <div style={styles.successCheck}>✓</div>
+              <div style={s.successBox}>
+                <div style={s.successCheck}>✓</div>
                 <div>
-                  <p style={styles.successTitle}>Tack för ditt meddelande!</p>
-                  <p style={styles.successSub}>
-                    Vi återkommer inom 1 arbetsdag.
-                  </p>
+                  <p style={s.successTitle}>Tack för ditt meddelande!</p>
+                  <p style={s.successSub}>Vi återkommer inom 1 arbetsdag.</p>
                 </div>
               </div>
             ) : (
-              <form style={styles.form} onSubmit={handleSubmit}>
-                <div style={styles.formRow}>
-                  <label style={styles.label}>Namn *</label>
-                  <input
-                    style={styles.input}
-                    name="name"
-                    value={form.name}
-                    onChange={handleChange}
-                    placeholder="Ditt namn"
-                    required
-                  />
+              <form style={s.form} onSubmit={handleSubmit}>
+                <div style={s.formRow}>
+                  <label style={s.label}>Namn *</label>
+                  <input className="contact-input" style={s.input} name="name" value={form.name} onChange={handleChange} placeholder="Ditt namn" required />
                 </div>
-                <div style={styles.formRow}>
-                  <label style={styles.label}>E-post *</label>
-                  <input
-                    style={styles.input}
-                    name="email"
-                    type="email"
-                    value={form.email}
-                    onChange={handleChange}
-                    placeholder="din@email.se"
-                    required
-                  />
+                <div style={s.formRow}>
+                  <label style={s.label}>E-post *</label>
+                  <input className="contact-input" style={s.input} name="email" type="email" value={form.email} onChange={handleChange} placeholder="din@email.se" required />
                 </div>
-                <div style={styles.formRow}>
-                  <label style={styles.label}>Telefon</label>
-                  <input
-                    style={styles.input}
-                    name="phone"
-                    type="tel"
-                    value={form.phone}
-                    onChange={handleChange}
-                    placeholder="070-000 00 00"
-                  />
+                <div style={s.formRow}>
+                  <label style={s.label}>Telefon</label>
+                  <input className="contact-input" style={s.input} name="phone" type="tel" value={form.phone} onChange={handleChange} placeholder="070-000 00 00" />
                 </div>
-                <div style={styles.formRow}>
-                  <label style={styles.label}>Meddelande *</label>
-                  <textarea
-                    style={styles.textarea}
-                    name="message"
-                    value={form.message}
-                    onChange={handleChange}
-                    placeholder="Vad kan vi hjälpa dig med?"
-                    rows={5}
-                    required
-                  />
+                <div style={s.formRow}>
+                  <label style={s.label}>Meddelande *</label>
+                  <textarea className="contact-input" style={s.textarea} name="message" value={form.message} onChange={handleChange} placeholder="Vad kan vi hjälpa dig med?" rows={5} required />
                 </div>
-                {sendError && <p style={styles.sendError}>{sendError}</p>}
-                <button
-                  type="submit"
-                  disabled={sending}
-                  style={{
-                    ...styles.submitBtn,
-                    ...(btnHovered && !sending ? styles.submitBtnHover : {}),
-                    ...(sending ? { opacity: 0.7 } : {}),
-                  }}
-                  onMouseEnter={() => setBtnHovered(true)}
-                  onMouseLeave={() => setBtnHovered(false)}
-                >
+                {sendError && <p style={s.sendError}>{sendError}</p>}
+                <button type="submit" disabled={sending} style={{ ...s.submitBtn, opacity: sending ? 0.7 : 1 }}>
                   {sending ? "Skickar…" : "Skicka meddelande"}
                 </button>
               </form>
@@ -170,26 +115,25 @@ export default function ContactPage() {
   );
 }
 
-const styles = {
-  page: {
-    backgroundColor: "#faf7f6",
-  },
+const s = {
+  page: { backgroundColor: "#0a0e27", minHeight: "calc(100vh - 68px)" },
   hero: {
-    backgroundColor: "#285570",
-    padding: "3rem 1.5rem",
+    backgroundColor: "#0f1335",
+    borderBottom: "1px solid rgba(201,169,97,0.15)",
+    padding: "3.5rem 1.5rem",
     textAlign: "center",
   },
   heroTitle: {
-    fontSize: "2rem",
+    fontSize: "2.2rem",
     fontWeight: 800,
     color: "#ffffff",
     margin: 0,
-    letterSpacing: "-0.02em",
+    letterSpacing: "-0.03em",
   },
   heroSub: {
-    fontSize: "1rem",
-    color: "rgba(255,255,255,0.68)",
-    marginTop: "0.5rem",
+    fontSize: "0.95rem",
+    color: "#6b6b7e",
+    marginTop: "0.6rem",
   },
   content: {
     maxWidth: "1100px",
@@ -200,130 +144,88 @@ const styles = {
     gap: "1.5rem",
     alignItems: "flex-start",
   },
-  infoCol: {
-    flex: "1",
-    minWidth: "260px",
-  },
-  formCol: {
-    flex: "1.6",
-    minWidth: "300px",
-  },
+  infoCol: { flex: "1", minWidth: "260px" },
+  formCol: { flex: "1.6", minWidth: "300px" },
   card: {
-    backgroundColor: "#ffffff",
-    border: "1px solid #e3ded7",
-    borderRadius: "10px",
+    backgroundColor: "#0f1335",
+    border: "1px solid rgba(201,169,97,0.15)",
+    borderRadius: "12px",
     padding: "1.75rem",
   },
   cardTitle: {
-    fontSize: "1.05rem",
+    fontSize: "1rem",
     fontWeight: 700,
-    color: "#285570",
+    color: "#c9a961",
     marginBottom: "1.25rem",
+    letterSpacing: "0.02em",
   },
-  infoList: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.85rem",
-  },
-  infoRow: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "3px",
-  },
+  infoList: { display: "flex", flexDirection: "column", gap: "0.85rem" },
+  infoRow: { display: "flex", flexDirection: "column", gap: "3px" },
   infoLabel: {
-    fontSize: "0.7rem",
+    fontSize: "0.65rem",
     fontWeight: 700,
-    color: "#cbcac7",
+    color: "rgba(201,169,97,0.5)",
     textTransform: "uppercase",
-    letterSpacing: "0.07em",
+    letterSpacing: "0.08em",
   },
-  infoValue: {
-    fontSize: "0.92rem",
-    color: "#333333",
-    fontWeight: 500,
-  },
+  infoValue: { fontSize: "0.9rem", color: "#e0e0e0", fontWeight: 500 },
   hoursGrid: {
     display: "grid",
     gridTemplateColumns: "1fr auto",
     gap: "0.65rem 1rem",
     alignItems: "center",
   },
-  dayLabel: {
-    fontSize: "0.9rem",
-    color: "#333333",
-  },
-  timeLabel: {
-    fontSize: "0.9rem",
-    fontWeight: 600,
-    color: "#285570",
-    textAlign: "right",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "1rem",
-  },
-  formRow: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.4rem",
-  },
-  label: {
-    fontSize: "0.82rem",
-    fontWeight: 600,
-    color: "#333333",
-  },
+  dayLabel: { fontSize: "0.875rem", color: "#a0a0b0" },
+  timeLabel: { fontSize: "0.875rem", fontWeight: 600, color: "#c9a961", textAlign: "right" },
+  form: { display: "flex", flexDirection: "column", gap: "1rem" },
+  formRow: { display: "flex", flexDirection: "column", gap: "0.4rem" },
+  label: { fontSize: "0.78rem", fontWeight: 600, color: "#a0a0b0", letterSpacing: "0.02em" },
   input: {
     width: "100%",
-    padding: "0.6rem 0.85rem",
-    border: "1px solid #e3ded7",
-    borderRadius: "7px",
+    padding: "0.65rem 0.85rem",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "8px",
     fontSize: "0.9rem",
-    color: "#333333",
-    backgroundColor: "#faf7f6",
-    outline: "none",
-    boxSizing: "border-box",
+    color: "#e0e0e0",
+    backgroundColor: "#1a1f3a",
     fontFamily: "inherit",
-    transition: "border-color 0.15s",
+    boxSizing: "border-box",
+    transition: "border-color 0.18s, background 0.18s",
   },
   textarea: {
     width: "100%",
-    padding: "0.6rem 0.85rem",
-    border: "1px solid #e3ded7",
-    borderRadius: "7px",
+    padding: "0.65rem 0.85rem",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "8px",
     fontSize: "0.9rem",
-    color: "#333333",
-    backgroundColor: "#faf7f6",
-    outline: "none",
-    boxSizing: "border-box",
+    color: "#e0e0e0",
+    backgroundColor: "#1a1f3a",
     fontFamily: "inherit",
+    boxSizing: "border-box",
     resize: "vertical",
     minHeight: "120px",
+    transition: "border-color 0.18s, background 0.18s",
   },
   submitBtn: {
-    backgroundColor: "#285570",
-    color: "#ffffff",
+    backgroundColor: "#c9a961",
+    color: "#0a0e27",
     border: "none",
     borderRadius: "8px",
-    padding: "0.75rem 1.5rem",
-    fontSize: "0.95rem",
+    padding: "0.78rem 1.5rem",
+    fontSize: "0.9rem",
     fontWeight: 700,
     cursor: "pointer",
-    transition: "background-color 0.15s",
-    marginTop: "0.25rem",
     fontFamily: "inherit",
-    outline: "none",
-    WebkitTapHighlightColor: "transparent",
     alignSelf: "flex-start",
-  },
-  submitBtnHover: {
-    backgroundColor: "#1e3f52",
+    letterSpacing: "0.02em",
+    transition: "opacity 0.18s",
+    marginTop: "0.25rem",
   },
   sendError: {
-    fontSize: "0.85rem",
-    color: "#b00020",
-    backgroundColor: "#fff0f0",
-    border: "1px solid #f5c6cb",
+    fontSize: "0.82rem",
+    color: "#ef4444",
+    backgroundColor: "rgba(239,68,68,0.08)",
+    border: "1px solid rgba(239,68,68,0.2)",
     borderRadius: "6px",
     padding: "0.5rem 0.75rem",
   },
@@ -331,33 +233,19 @@ const styles = {
     display: "flex",
     alignItems: "center",
     gap: "1rem",
-    backgroundColor: "#f0f7f4",
-    border: "1px solid #a8d5c5",
+    backgroundColor: "rgba(201,169,97,0.08)",
+    border: "1px solid rgba(201,169,97,0.2)",
     borderRadius: "8px",
     padding: "1.25rem",
     marginTop: "0.5rem",
   },
   successCheck: {
-    width: "40px",
-    height: "40px",
-    backgroundColor: "#285570",
-    color: "#ffffff",
+    width: "40px", height: "40px",
+    backgroundColor: "#c9a961", color: "#0a0e27",
     borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: "1.1rem",
-    fontWeight: 700,
-    flexShrink: 0,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontSize: "1.1rem", fontWeight: 700, flexShrink: 0,
   },
-  successTitle: {
-    fontWeight: 700,
-    color: "#285570",
-    fontSize: "0.95rem",
-  },
-  successSub: {
-    color: "#333333",
-    fontSize: "0.85rem",
-    marginTop: "2px",
-  },
+  successTitle: { fontWeight: 700, color: "#c9a961", fontSize: "0.95rem" },
+  successSub: { color: "#a0a0b0", fontSize: "0.85rem", marginTop: "2px" },
 };

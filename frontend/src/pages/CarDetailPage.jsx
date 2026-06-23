@@ -4,326 +4,152 @@ import { getCarById, getAllCars } from "../services/api";
 
 function HeartIcon({ filled }) {
   return filled ? (
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="#285570"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="#c9a961">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   ) : (
-    <svg
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="#285570"
-      strokeWidth="2"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#c9a961" strokeWidth="2">
       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
     </svg>
   );
 }
 
-function formatMileage(km) {
-  return Number(km).toLocaleString("sv-SE") + " km";
-}
-
-function formatPrice(price) {
-  return Number(price).toLocaleString("sv-SE") + " kr";
-}
-
+function formatMileage(km)  { return Number(km).toLocaleString("sv-SE") + " km"; }
+function formatPrice(price) { return Number(price).toLocaleString("sv-SE") + " kr"; }
 function loadFavorites() {
-  try {
-    return JSON.parse(localStorage.getItem("favorites") || "[]");
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(localStorage.getItem("favorites") || "[]"); }
+  catch { return []; }
 }
 
 export default function CarDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [car, setCar] = useState(null);
-  const [error, setError] = useState(null);
-  const [loadedId, setLoadedId] = useState(null);
+  const [car, setCar]               = useState(null);
+  const [error, setError]           = useState(null);
+  const [loadedId, setLoadedId]     = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [favorites, setFavorites] = useState(loadFavorites);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [similarCars, setSimilarCars] = useState([]);
+  const [favorites, setFavs]        = useState(loadFavorites);
+  const [lightboxOpen, setLbOpen]   = useState(false);
+  const [lbIndex, setLbIndex]       = useState(0);
+  const [similarCars, setSimilar]   = useState([]);
 
-  // Derived: loading when the fetched id doesn't match the current route id
   const loading = loadedId !== id;
 
   useEffect(() => {
     let cancelled = false;
-    getCarById(id).then((data) => {
-      if (cancelled) return;
-      window.scrollTo({ top: 0, behavior: "smooth" }); // ← LÄGG TILL DENNA
-      setCar(data);
-      setError(null);
-      setLoadedId(id);
-      setActiveIndex(0);
-      setLightboxOpen(false);
-    });
-  }, [id]);
-
-  useEffect(() => {
-    let cancelled = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
     getCarById(id)
-      .then((data) => {
-        if (cancelled) return;
-        setCar(data);
-        setError(null);
-        setLoadedId(id);
-        setActiveIndex(0);
-        setLightboxOpen(false);
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        setCar(null);
-        setError(err.message);
-        setLoadedId(id);
-      });
-    return () => {
-      cancelled = true;
-    };
+      .then((d) => { if (!cancelled) { setCar(d); setError(null); setLoadedId(id); setActiveIndex(0); setLbOpen(false); } })
+      .catch((e) => { if (!cancelled) { setCar(null); setError(e.message); setLoadedId(id); } });
+    return () => { cancelled = true; };
   }, [id]);
 
   useEffect(() => {
     if (!car || car._id !== id) return;
-    getAllCars()
-      .then((all) => {
-        const others = all.filter((c) => c._id !== id);
-        const sameMake = others.filter((c) => c.brand === car.brand);
-        const priceMatch = others.filter(
-          (c) => c.price >= car.price * 0.8 && c.price <= car.price * 1.2,
-        );
-        const combined = [
-          ...new Map(
-            [...sameMake, ...priceMatch].map((c) => [c._id, c]),
-          ).values(),
-        ].slice(0, 4);
-        setSimilarCars(combined);
-      })
-      .catch(() => {});
+    let cancelled = false;
+    getAllCars().then((all) => {
+      if (cancelled) return;
+      const others   = all.filter((c) => c._id !== id);
+      const sameMake = others.filter((c) => c.brand === car.brand);
+      const priceMatch = others.filter((c) => c.price >= car.price * 0.8 && c.price <= car.price * 1.2);
+      const combined = [...new Map([...sameMake, ...priceMatch].map((c) => [c._id, c])).values()].slice(0, 4);
+      setSimilar(combined);
+    }).catch(() => {});
+    return () => { cancelled = true; };
   }, [car, id]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
-    const imageCount = car?.images?.length ?? 0;
-    function handleKey(e) {
-      if (e.key === "Escape") setLightboxOpen(false);
-      if (e.key === "ArrowLeft")
-        setLightboxIndex((i) => (i === 0 ? imageCount - 1 : i - 1));
-      if (e.key === "ArrowRight")
-        setLightboxIndex((i) => (i === imageCount - 1 ? 0 : i + 1));
+    const count = car?.images?.length ?? 0;
+    function onKey(e) {
+      if (e.key === "Escape")      setLbOpen(false);
+      if (e.key === "ArrowLeft")   setLbIndex((i) => (i === 0 ? count - 1 : i - 1));
+      if (e.key === "ArrowRight")  setLbIndex((i) => (i === count - 1 ? 0 : i + 1));
     }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, [lightboxOpen, car]);
 
-  function toggleFavorite() {
-    setFavorites((prev) => {
-      const next = prev.includes(id)
-        ? prev.filter((f) => f !== id)
-        : [...prev, id];
-      localStorage.setItem("favorites", JSON.stringify(next));
-      return next;
+  function toggleFav() {
+    setFavs((p) => {
+      const n = p.includes(id) ? p.filter((f) => f !== id) : [...p, id];
+      localStorage.setItem("favorites", JSON.stringify(n));
+      return n;
     });
   }
 
-  function openLightbox(index) {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
-  }
-
-  if (loading) {
-    return (
-      <main style={styles.page}>
-        <p style={styles.status}>Laddar bil...</p>
-      </main>
-    );
-  }
-
-  if (error) {
-    return (
-      <main style={styles.page}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          ← Tillbaka
-        </button>
-        <p style={styles.errorText}>{error}</p>
-      </main>
-    );
-  }
+  if (loading) return <main style={s.page}><p style={s.status}>Laddar bil...</p></main>;
+  if (error)   return (
+    <main style={s.page}>
+      <button style={s.backBtn} onClick={() => navigate(-1)}>← Tillbaka</button>
+      <p style={s.errorText}>{error}</p>
+    </main>
+  );
 
   const images = car.images?.length ? car.images : [];
-  const isFav = favorites.includes(id);
-
-  function prevImage() {
-    setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-  }
-
-  function nextImage() {
-    setActiveIndex((i) => (i === images.length - 1 ? 0 : i + 1));
-  }
-
-  function lbPrev(e) {
-    e.stopPropagation();
-    setLightboxIndex((i) => (i === 0 ? images.length - 1 : i - 1));
-  }
-
-  function lbNext(e) {
-    e.stopPropagation();
-    setLightboxIndex((i) => (i === images.length - 1 ? 0 : i + 1));
-  }
+  const isFav  = favorites.includes(id);
 
   const detailRows = [
-    { label: "Bränsle", value: car.fuel },
-    { label: "Växellåda", value: car.transmission },
-    { label: "Karosstyp", value: car.bodyType },
-    { label: "Färg", value: car.color },
+    { label: "Bränsle",    value: car.fuel },
+    { label: "Växellåda",  value: car.transmission },
+    { label: "Karosstyp",  value: car.bodyType },
+    { label: "Färg",       value: car.color },
   ].filter((r) => r.value);
 
   return (
     <>
-      {/* ── Lightbox ── */}
+      {/* Lightbox */}
       <div
-        style={{
-          ...styles.lightboxOverlay,
-          opacity: lightboxOpen ? 1 : 0,
-          pointerEvents: lightboxOpen ? "auto" : "none",
-        }}
-        onClick={() => setLightboxOpen(false)}
-        aria-modal="true"
-        role="dialog"
+        style={{ ...s.lbOverlay, opacity: lightboxOpen ? 1 : 0, pointerEvents: lightboxOpen ? "auto" : "none" }}
+        onClick={() => setLbOpen(false)}
       >
-        <button
-          style={styles.lbClose}
-          onClick={() => setLightboxOpen(false)}
-          aria-label="Stäng"
-        >
-          ✕
-        </button>
-
+        <button style={s.lbClose} onClick={() => setLbOpen(false)}>✕</button>
         {images.length > 1 && (
-          <button
-            style={{ ...styles.lbArrow, left: "1rem" }}
-            onClick={lbPrev}
-            aria-label="Föregående bild"
-          >
-            ‹
-          </button>
+          <button style={{ ...s.lbArrow, left: "1rem" }} onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i === 0 ? images.length - 1 : i - 1)); }}>‹</button>
         )}
-
-        <div style={styles.lbImageWrap} onClick={(e) => e.stopPropagation()}>
-          {images[lightboxIndex] && (
-            <img
-              src={images[lightboxIndex]}
-              alt={`${car.brand} ${car.model} bild ${lightboxIndex + 1}`}
-              style={styles.lbImage}
-            />
-          )}
+        <div style={s.lbImageWrap} onClick={(e) => e.stopPropagation()}>
+          {images[lbIndex] && <img src={images[lbIndex]} alt="" style={s.lbImage} />}
         </div>
-
         {images.length > 1 && (
-          <button
-            style={{ ...styles.lbArrow, right: "1rem" }}
-            onClick={lbNext}
-            aria-label="Nästa bild"
-          >
-            ›
-          </button>
+          <button style={{ ...s.lbArrow, right: "1rem" }} onClick={(e) => { e.stopPropagation(); setLbIndex((i) => (i === images.length - 1 ? 0 : i + 1)); }}>›</button>
         )}
-
-        <span style={styles.lbCounter}>
-          {lightboxIndex + 1} / {images.length}
-        </span>
+        <span style={s.lbCounter}>{lbIndex + 1} / {images.length}</span>
       </div>
 
-      {/* ── Page ── */}
-      <main style={styles.page}>
-        <div style={styles.topBar}>
-          <button style={styles.backBtn} onClick={() => navigate(-1)}>
-            ← Tillbaka
-          </button>
-          <button
-            style={styles.favBtn}
-            onClick={toggleFavorite}
-            aria-label={
-              isFav ? "Ta bort från favoriter" : "Lägg till i favoriter"
-            }
-          >
+      <main style={s.page}>
+        {/* Top bar */}
+        <div style={s.topBar}>
+          <button style={s.backBtn} onClick={() => navigate(-1)}>← Tillbaka</button>
+          <button style={s.favBtn} onClick={toggleFav}>
             <HeartIcon filled={isFav} />
             <span>{isFav ? "Sparat" : "Spara"}</span>
           </button>
         </div>
 
         {/* Gallery */}
-        <div style={styles.gallery}>
-          <div
-            style={styles.mainWrap}
-            onClick={() => images.length > 0 && openLightbox(activeIndex)}
-          >
+        <div style={s.gallery}>
+          <div style={s.mainWrap} onClick={() => images.length > 0 && (setLbIndex(activeIndex), setLbOpen(true))}>
             {images.length > 0 ? (
-              <img
-                src={images[activeIndex]}
-                alt={`${car.brand} ${car.model} bild ${activeIndex + 1}`}
-                style={{ ...styles.mainImage, cursor: "zoom-in" }}
-              />
+              <>
+                <img src={images[activeIndex]} alt={`${car.brand} ${car.model}`} style={{ ...s.mainImage, cursor: "zoom-in" }} />
+                <div style={s.imgOverlay} />
+              </>
             ) : (
-              <div style={styles.noImage}>Ingen bild tillgänglig</div>
+              <div style={s.noImage}>Ingen bild tillgänglig</div>
             )}
             {images.length > 1 && (
               <>
-                <button
-                  style={{ ...styles.arrowBtn, left: "0.5rem" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    prevImage();
-                  }}
-                  aria-label="Föregående bild"
-                >
-                  ‹
-                </button>
-                <button
-                  style={{ ...styles.arrowBtn, right: "0.5rem" }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    nextImage();
-                  }}
-                  aria-label="Nästa bild"
-                >
-                  ›
-                </button>
-                <span style={styles.counter}>
-                  {activeIndex + 1} / {images.length}
-                </span>
+                <button style={{ ...s.arrowBtn, left: "0.75rem" }} onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1)); }}>‹</button>
+                <button style={{ ...s.arrowBtn, right: "0.75rem" }} onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === images.length - 1 ? 0 : i + 1)); }}>›</button>
+                <span style={s.counter}>{activeIndex + 1} / {images.length}</span>
               </>
             )}
           </div>
-
           {images.length > 1 && (
-            <div style={styles.thumbRow}>
+            <div style={s.thumbRow}>
               {images.map((src, i) => (
-                <button
-                  key={i}
-                  style={
-                    i === activeIndex
-                      ? { ...styles.thumb, ...styles.thumbActive }
-                      : styles.thumb
-                  }
-                  onClick={() => {
-                    setActiveIndex(i);
-                    openLightbox(i);
-                  }}
-                  aria-label={`Bild ${i + 1}`}
-                >
-                  <img src={src} alt="" style={styles.thumbImg} />
+                <button key={i} style={i === activeIndex ? { ...s.thumb, ...s.thumbActive } : s.thumb} onClick={() => { setActiveIndex(i); setLbIndex(i); setLbOpen(true); }}>
+                  <img src={src} alt="" style={s.thumbImg} />
                 </button>
               ))}
             </div>
@@ -331,51 +157,44 @@ export default function CarDetailPage() {
         </div>
 
         {/* Info */}
-        <section style={styles.info}>
-          <h1 style={styles.heading}>
-            {car.brand} {car.model}
-          </h1>
-
-          <div style={styles.meta}>
+        <section style={s.info}>
+          <h1 style={s.heading}>{car.brand} {car.model}</h1>
+          <div style={s.meta}>
             <span>{car.year}</span>
-            <span style={styles.dot}>·</span>
+            <span style={s.dot}>·</span>
             <span>{formatMileage(car.mileage)}</span>
           </div>
-
-          <p style={styles.price}>{formatPrice(car.price)}</p>
+          <p style={s.price}>{formatPrice(car.price)}</p>
 
           {detailRows.length > 0 && (
-            <dl style={styles.detailGrid}>
+            <dl style={s.detailGrid}>
               {detailRows.map(({ label, value }) => (
-                <div key={label} style={styles.detailItem}>
-                  <dt style={styles.detailLabel}>{label}</dt>
-                  <dd style={styles.detailValue}>{value}</dd>
+                <div key={label} style={s.detailItem}>
+                  <dt style={s.detailLabel}>{label}</dt>
+                  <dd style={s.detailValue}>{value}</dd>
                 </div>
               ))}
             </dl>
           )}
 
           {car.description && (
-            <div style={styles.descBox}>
-              <h2 style={styles.descHeading}>Beskrivning</h2>
-              <p style={styles.description}>{car.description}</p>
+            <div style={s.descBox}>
+              <h2 style={s.descHeading}>Beskrivning</h2>
+              <p style={s.description}>{car.description}</p>
             </div>
           )}
 
           {/* Säljare */}
-          <div style={styles.sellerBox}>
-            <div style={styles.sellerLeft}>
-              <div style={styles.sellerBadge}>SW</div>
+          <div style={s.sellerBox}>
+            <div style={s.sellerLeft}>
+              <div style={s.sellerBadge}>SW</div>
               <div>
-                <p style={styles.sellerLabel}>Säljare</p>
-                <p style={styles.sellerName}>Swedmarks Bil</p>
-                <p style={styles.sellerLocation}>Helsingborg, Sverige</p>
+                <p style={s.sellerLabel}>Säljare</p>
+                <p style={s.sellerName}>Swedmarks Bil</p>
+                <p style={s.sellerLocation}>Helsingborg, Sverige</p>
               </div>
             </div>
-            <button
-              style={styles.contactBtn}
-              onClick={() => navigate("/contact")}
-            >
+            <button style={s.contactBtn} onClick={() => navigate("/contact")}>
               Kontakta säljaren
             </button>
           </div>
@@ -383,39 +202,24 @@ export default function CarDetailPage() {
 
         {/* Liknande bilar */}
         {similarCars.length > 0 && (
-          <section style={styles.similarSection}>
-            <h2 style={styles.similarHeading}>Liknande bilar</h2>
-            <div style={styles.similarGrid}>
+          <section style={s.similarSection}>
+            <h2 style={s.similarHeading}>Liknande bilar</h2>
+            <div style={s.similarGrid}>
               {similarCars.map((c) => {
                 const thumb = c.images?.[0] ?? null;
                 return (
-                  <article
-                    key={c._id}
-                    style={styles.similarCard}
-                    onClick={() => navigate(`/cars/${c._id}`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && navigate(`/cars/${c._id}`)
-                    }
-                  >
-                    <div style={styles.similarImageWrap}>
+                  <article key={c._id} style={s.similarCard} onClick={() => navigate(`/cars/${c._id}`)} role="button" tabIndex={0}>
+                    <div style={s.similarImageWrap}>
                       {thumb ? (
-                        <img
-                          src={thumb}
-                          alt={`${c.brand} ${c.model}`}
-                          style={styles.similarImage}
-                        />
+                        <img src={thumb} alt={`${c.brand} ${c.model}`} style={s.similarImage} />
                       ) : (
-                        <div style={styles.similarNoImage}>Ingen bild</div>
+                        <div style={s.similarNoImage}>Ingen bild</div>
                       )}
                     </div>
-                    <div style={styles.similarInfo}>
-                      <p style={styles.similarTitle}>
-                        {c.make} {c.model}
-                      </p>
-                      <p style={styles.similarYear}>{c.year}</p>
-                      <p style={styles.similarPrice}>{formatPrice(c.price)}</p>
+                    <div style={s.similarInfo}>
+                      <p style={s.similarTitle}>{c.brand} {c.model}</p>
+                      <p style={s.similarYear}>{c.year}</p>
+                      <p style={s.similarPrice}>{formatPrice(c.price)}</p>
                     </div>
                   </article>
                 );
@@ -428,411 +232,147 @@ export default function CarDetailPage() {
   );
 }
 
-const styles = {
-  page: {
-    maxWidth: "900px",
-    margin: "0 auto",
-    padding: "1rem",
-    backgroundColor: "#faf7f6",
-    minHeight: "100vh",
-  },
-  status: {
-    textAlign: "center",
-    color: "#cbcac7",
-    marginTop: "4rem",
-    fontSize: "1rem",
-  },
-  errorText: {
-    textAlign: "center",
-    color: "#b00020",
-    marginTop: "2rem",
-    fontSize: "1rem",
-  },
+const s = {
+  page: { maxWidth: "900px", margin: "0 auto", padding: "1.5rem 1rem 3rem", backgroundColor: "#0a0e27", minHeight: "calc(100vh - 68px)" },
+  status: { textAlign: "center", color: "#6b6b7e", marginTop: "4rem" },
+  errorText: { textAlign: "center", color: "#ef4444", marginTop: "2rem" },
 
-  // ── Top bar ──
-  topBar: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "1rem",
-  },
+  topBar: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.25rem" },
   backBtn: {
-    background: "none",
-    border: "1px solid #cbcac7",
-    borderRadius: "6px",
-    padding: "0.4rem 0.9rem",
-    cursor: "pointer",
-    color: "#285570",
-    fontWeight: 600,
-    fontSize: "0.875rem",
+    background: "none", border: "1px solid rgba(201,169,97,0.25)", borderRadius: "6px",
+    padding: "0.42rem 0.9rem", cursor: "pointer", color: "#c9a961",
+    fontWeight: 600, fontSize: "0.82rem", fontFamily: "inherit",
+    transition: "border-color 0.18s",
   },
   favBtn: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.4rem",
-    background: "none",
-    border: "1px solid #cbcac7",
-    borderRadius: "6px",
-    padding: "0.4rem 0.9rem",
-    cursor: "pointer",
-    color: "#285570",
-    fontWeight: 600,
-    fontSize: "0.875rem",
+    display: "flex", alignItems: "center", gap: "0.4rem",
+    background: "none", border: "1px solid rgba(201,169,97,0.25)", borderRadius: "6px",
+    padding: "0.42rem 0.9rem", cursor: "pointer", color: "#c9a961",
+    fontWeight: 600, fontSize: "0.82rem", fontFamily: "inherit",
+    transition: "border-color 0.18s",
   },
 
-  // ── Gallery ──
-  gallery: {
-    marginBottom: "1.5rem",
-  },
+  gallery: { marginBottom: "1.75rem" },
   mainWrap: {
-    position: "relative",
-    width: "80%",
-    margin: "0 auto",
-    aspectRatio: "16/9",
-    backgroundColor: "#e3ded7",
-    borderRadius: "10px",
-    overflow: "hidden",
+    position: "relative", width: "80%", margin: "0 auto",
+    aspectRatio: "16/9", backgroundColor: "#0f1335",
+    borderRadius: "12px", overflow: "hidden",
+    border: "1px solid rgba(201,169,97,0.12)",
   },
-  mainImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
+  mainImage: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  imgOverlay: {
+    position: "absolute", bottom: 0, left: 0, right: 0, height: "35%",
+    background: "linear-gradient(to top, rgba(10,14,39,0.6), transparent)",
+    pointerEvents: "none",
   },
-  noImage: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#cbcac7",
-    fontSize: "1rem",
-  },
+  noImage: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b6b7e" },
   arrowBtn: {
-    position: "absolute",
-    top: "50%",
-    transform: "translateY(-50%)",
-    background: "rgba(250,247,246,0.85)",
-    border: "none",
-    borderRadius: "50%",
-    width: "40px",
-    height: "40px",
-    fontSize: "1.75rem",
-    lineHeight: 1,
-    cursor: "pointer",
-    color: "#285570",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
+    position: "absolute", top: "50%", transform: "translateY(-50%)",
+    background: "rgba(10,14,39,0.75)", backdropFilter: "blur(4px)",
+    border: "1px solid rgba(201,169,97,0.2)", borderRadius: "50%",
+    width: "40px", height: "40px", fontSize: "1.6rem", lineHeight: 1,
+    cursor: "pointer", color: "#c9a961", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
   },
   counter: {
-    position: "absolute",
-    bottom: "0.5rem",
-    right: "0.75rem",
-    background: "rgba(0,0,0,0.45)",
-    color: "#fff",
-    fontSize: "0.75rem",
-    padding: "0.2rem 0.5rem",
-    borderRadius: "4px",
+    position: "absolute", bottom: "0.6rem", right: "0.75rem",
+    background: "rgba(10,14,39,0.7)", color: "rgba(201,169,97,0.7)",
+    fontSize: "0.72rem", padding: "0.2rem 0.5rem", borderRadius: "4px",
   },
   thumbRow: {
-    display: "flex",
-    gap: "0.5rem",
-    overflowX: "auto",
-    padding: "0.5rem 0",
-    width: "80%",
-    margin: "0.75rem auto 0",
+    display: "flex", gap: "0.5rem", overflowX: "auto", padding: "0.5rem 0",
+    width: "80%", margin: "0.75rem auto 0",
   },
   thumb: {
-    flex: "0 0 80px",
-    height: "54px",
-    border: "2px solid transparent",
-    borderRadius: "6px",
-    overflow: "hidden",
-    padding: 0,
-    cursor: "pointer",
-    background: "none",
+    flex: "0 0 80px", height: "54px",
+    border: "2px solid rgba(255,255,255,0.08)", borderRadius: "6px",
+    overflow: "hidden", padding: 0, cursor: "pointer", background: "none",
+    transition: "border-color 0.18s",
   },
-  thumbActive: {
-    borderColor: "#285570",
-  },
-  thumbImg: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-  },
+  thumbActive: { borderColor: "#c9a961" },
+  thumbImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
 
-  // ── Info ──
-  info: {
-    paddingBottom: "1.5rem",
-  },
-  heading: {
-    fontSize: "1.75rem",
-    fontWeight: 700,
-    color: "#285570",
-    margin: "0 0 0.4rem",
-  },
-  meta: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    color: "#cbcac7",
-    fontSize: "0.9rem",
-    marginBottom: "0.75rem",
-  },
-  dot: {
-    color: "#cbcac7",
-  },
-  price: {
-    fontSize: "1.75rem",
-    fontWeight: 700,
-    color: "#285570",
-    margin: "0 0 1.25rem",
-  },
+  info: { paddingBottom: "1.5rem" },
+  heading: { fontSize: "1.85rem", fontWeight: 700, color: "#ffffff", margin: "0 0 0.4rem", letterSpacing: "-0.02em" },
+  meta: { display: "flex", alignItems: "center", gap: "0.5rem", color: "#6b6b7e", fontSize: "0.875rem", marginBottom: "0.75rem" },
+  dot: { color: "#6b6b7e" },
+  price: { fontSize: "1.9rem", fontWeight: 700, color: "#c9a961", margin: "0 0 1.5rem", letterSpacing: "-0.02em" },
+
   detailGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "0.75rem",
-    backgroundColor: "#fff",
-    border: "1px solid #e3ded7",
-    borderRadius: "8px",
-    padding: "1rem",
-    marginBottom: "1.25rem",
+    display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "0.75rem",
+    backgroundColor: "#0f1335", border: "1px solid rgba(201,169,97,0.12)",
+    borderRadius: "10px", padding: "1.1rem", marginBottom: "1.25rem",
   },
-  detailItem: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.2rem",
-  },
-  detailLabel: {
-    fontSize: "0.72rem",
-    color: "#cbcac7",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    fontWeight: 600,
-    margin: 0,
-  },
-  detailValue: {
-    fontSize: "0.95rem",
-    color: "#333333",
-    fontWeight: 500,
-    margin: 0,
-  },
+  detailItem: { display: "flex", flexDirection: "column", gap: "0.2rem" },
+  detailLabel: { fontSize: "0.68rem", color: "rgba(201,169,97,0.5)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, margin: 0 },
+  detailValue: { fontSize: "0.95rem", color: "#e0e0e0", fontWeight: 500, margin: 0 },
+
   descBox: {
-    backgroundColor: "#fff",
-    border: "1px solid #e3ded7",
-    borderRadius: "8px",
-    padding: "1rem",
-    marginBottom: "1.25rem",
+    backgroundColor: "#0f1335", border: "1px solid rgba(201,169,97,0.12)",
+    borderRadius: "10px", padding: "1.1rem", marginBottom: "1.25rem",
   },
-  descHeading: {
-    fontSize: "1rem",
-    fontWeight: 600,
-    color: "#285570",
-    margin: "0 0 0.5rem",
-  },
-  description: {
-    fontSize: "0.9rem",
-    color: "#333333",
-    lineHeight: 1.65,
-    margin: 0,
-    whiteSpace: "pre-wrap",
-  },
+  descHeading: { fontSize: "0.85rem", fontWeight: 700, color: "#c9a961", margin: "0 0 0.6rem", letterSpacing: "0.04em", textTransform: "uppercase" },
+  description: { fontSize: "0.9rem", color: "#a0a0b0", lineHeight: 1.7, margin: 0, whiteSpace: "pre-wrap" },
 
-  // ── Säljare ──
   sellerBox: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    flexWrap: "wrap",
-    gap: "1rem",
-    backgroundColor: "#fff",
-    border: "1px solid #e3ded7",
-    borderRadius: "8px",
-    padding: "1rem 1.25rem",
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    flexWrap: "wrap", gap: "1rem",
+    backgroundColor: "#0f1335", border: "1px solid rgba(201,169,97,0.15)",
+    borderRadius: "10px", padding: "1.1rem 1.25rem",
   },
-  sellerLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.85rem",
-  },
+  sellerLeft: { display: "flex", alignItems: "center", gap: "0.85rem" },
   sellerBadge: {
-    width: "44px",
-    height: "44px",
-    borderRadius: "50%",
-    backgroundColor: "#285570",
-    color: "#fff",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontWeight: 700,
-    fontSize: "0.85rem",
-    flexShrink: 0,
+    width: "44px", height: "44px", borderRadius: "50%",
+    backgroundColor: "#c9a961", color: "#0a0e27",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    fontWeight: 700, fontSize: "0.85rem", flexShrink: 0,
   },
-  sellerLabel: {
-    fontSize: "0.72rem",
-    color: "#cbcac7",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    fontWeight: 600,
-    margin: "0 0 0.1rem",
-  },
-  sellerName: {
-    fontSize: "1rem",
-    fontWeight: 700,
-    color: "#285570",
-    margin: "0 0 0.1rem",
-  },
-  sellerLocation: {
-    fontSize: "0.8rem",
-    color: "#cbcac7",
-    margin: 0,
-  },
+  sellerLabel: { fontSize: "0.65rem", color: "rgba(201,169,97,0.5)", textTransform: "uppercase", letterSpacing: "0.06em", fontWeight: 600, margin: "0 0 0.1rem" },
+  sellerName: { fontSize: "0.95rem", fontWeight: 700, color: "#ffffff", margin: "0 0 0.1rem" },
+  sellerLocation: { fontSize: "0.78rem", color: "#6b6b7e", margin: 0 },
   contactBtn: {
-    backgroundColor: "#285570",
-    color: "#fff",
-    border: "none",
-    borderRadius: "6px",
-    padding: "0.55rem 1.2rem",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: "0.875rem",
-    whiteSpace: "nowrap",
+    backgroundColor: "#c9a961", color: "#0a0e27",
+    border: "none", borderRadius: "8px",
+    padding: "0.6rem 1.35rem", cursor: "pointer",
+    fontWeight: 700, fontSize: "0.875rem", fontFamily: "inherit",
+    letterSpacing: "0.02em", transition: "opacity 0.18s",
   },
 
-  // ── Liknande bilar ──
-  similarSection: {
-    paddingBottom: "2rem",
-  },
-  similarHeading: {
-    fontSize: "1.1rem",
-    fontWeight: 700,
-    color: "#285570",
-    margin: "0 0 1rem",
-  },
-  similarGrid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))",
-    gap: "0.75rem",
-  },
+  similarSection: { paddingBottom: "2rem" },
+  similarHeading: { fontSize: "1.1rem", fontWeight: 700, color: "#ffffff", margin: "0 0 1rem", letterSpacing: "-0.01em" },
+  similarGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.75rem" },
   similarCard: {
-    backgroundColor: "#fff",
-    border: "1px solid #e3ded7",
-    borderRadius: "8px",
-    overflow: "hidden",
-    cursor: "pointer",
-    transition: "box-shadow 0.15s",
+    backgroundColor: "#0f1335", border: "1px solid rgba(255,255,255,0.06)",
+    borderRadius: "8px", overflow: "hidden", cursor: "pointer",
+    transition: "box-shadow 0.18s, border-color 0.18s",
   },
-  similarImageWrap: {
-    width: "100%",
-    aspectRatio: "16/9",
-    backgroundColor: "#e3ded7",
-    overflow: "hidden",
-  },
-  similarImage: {
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-    display: "block",
-  },
-  similarNoImage: {
-    width: "100%",
-    height: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "#cbcac7",
-    fontSize: "0.75rem",
-  },
-  similarInfo: {
-    padding: "0.6rem 0.75rem",
-  },
-  similarTitle: {
-    fontSize: "0.85rem",
-    fontWeight: 600,
-    color: "#285570",
-    margin: "0 0 0.15rem",
-  },
-  similarYear: {
-    fontSize: "0.78rem",
-    color: "#cbcac7",
-    margin: "0 0 0.25rem",
-  },
-  similarPrice: {
-    fontSize: "0.9rem",
-    fontWeight: 700,
-    color: "#285570",
-    margin: 0,
-  },
+  similarImageWrap: { width: "100%", aspectRatio: "16/9", backgroundColor: "#1a1f3a", overflow: "hidden" },
+  similarImage: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
+  similarNoImage: { width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "#6b6b7e", fontSize: "0.75rem" },
+  similarInfo: { padding: "0.65rem 0.75rem" },
+  similarTitle: { fontSize: "0.85rem", fontWeight: 600, color: "#ffffff", margin: "0 0 0.15rem" },
+  similarYear: { fontSize: "0.75rem", color: "#6b6b7e", margin: "0 0 0.25rem" },
+  similarPrice: { fontSize: "0.9rem", fontWeight: 700, color: "#c9a961", margin: 0 },
 
-  // ── Lightbox ──
-  lightboxOverlay: {
-    position: "fixed",
-    inset: 0,
-    backgroundColor: "rgba(0,0,0,0.88)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-    transition: "opacity 0.25s ease",
+  lbOverlay: {
+    position: "fixed", inset: 0, backgroundColor: "rgba(5,8,20,0.95)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    zIndex: 1000, transition: "opacity 0.25s ease",
   },
   lbClose: {
-    position: "absolute",
-    top: "1rem",
-    right: "1rem",
-    background: "rgba(255,255,255,0.15)",
-    border: "none",
-    borderRadius: "50%",
-    width: "40px",
-    height: "40px",
-    color: "#fff",
-    fontSize: "1.1rem",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1001,
+    position: "absolute", top: "1rem", right: "1rem",
+    background: "rgba(201,169,97,0.12)", border: "1px solid rgba(201,169,97,0.2)",
+    borderRadius: "50%", width: "40px", height: "40px",
+    color: "#c9a961", fontSize: "1rem", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1001,
   },
   lbArrow: {
-    position: "absolute",
-    top: "50%",
-    transform: "translateY(-50%)",
-    background: "rgba(255,255,255,0.15)",
-    border: "none",
-    borderRadius: "50%",
-    width: "52px",
-    height: "52px",
-    fontSize: "2rem",
-    color: "#fff",
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 0,
-    zIndex: 1001,
+    position: "absolute", top: "50%", transform: "translateY(-50%)",
+    background: "rgba(201,169,97,0.1)", border: "1px solid rgba(201,169,97,0.2)",
+    borderRadius: "50%", width: "52px", height: "52px",
+    fontSize: "2rem", color: "#c9a961", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center", padding: 0, zIndex: 1001,
   },
-  lbImageWrap: {
-    maxWidth: "90vw",
-    maxHeight: "85vh",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  lbImage: {
-    maxWidth: "90vw",
-    maxHeight: "85vh",
-    objectFit: "contain",
-    borderRadius: "6px",
-    display: "block",
-  },
-  lbCounter: {
-    position: "absolute",
-    bottom: "1rem",
-    left: "50%",
-    transform: "translateX(-50%)",
-    color: "rgba(255,255,255,0.7)",
-    fontSize: "0.8rem",
-  },
+  lbImageWrap: { maxWidth: "90vw", maxHeight: "85vh", display: "flex", alignItems: "center", justifyContent: "center" },
+  lbImage: { maxWidth: "90vw", maxHeight: "85vh", objectFit: "contain", borderRadius: "8px", display: "block" },
+  lbCounter: { position: "absolute", bottom: "1rem", left: "50%", transform: "translateX(-50%)", color: "rgba(201,169,97,0.5)", fontSize: "0.78rem" },
 };
