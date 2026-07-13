@@ -22,6 +22,7 @@ const EMPTY_FORM = {
   bodyType: "",
   color: "",
   description: "",
+  status: "available",
 };
 
 function formatDate(dateStr) {
@@ -205,6 +206,7 @@ export default function AdminPage() {
       bodyType: car.bodyType,
       color: car.color,
       description: car.description,
+      status: car.status || "available",
     });
     setImageItems(
       (car.images || []).map((src, i) => ({
@@ -446,6 +448,18 @@ export default function AdminPage() {
                 placeholder="Svart"
               />
             </Field>
+            <Field label="Status">
+              <select
+                className="admin-input"
+                style={s.input}
+                name="status"
+                value={form.status}
+                onChange={handleChange}
+              >
+                <option value="available">Tillgänglig</option>
+                <option value="sold">Såld</option>
+              </select>
+            </Field>
           </div>
 
           <Field label="Beskrivning">
@@ -670,11 +684,14 @@ export default function AdminPage() {
                   ) : (
                     <div style={s.thumbPlaceholder}>Ingen bild</div>
                   )}
+                  {car.status === "sold" && (
+                    <span style={s.soldBadge}>SÅLD</span>
+                  )}
                 </div>
                 <div style={s.carInfo}>
                   <p style={s.carTitle}>{car.title}</p>
                   <p style={s.carMeta}>
-                    {car.year} &middot; {car.price.toLocaleString("sv-SE")} kr
+                    {car.year} &middot; {car.price.toLocaleString("sv-SE")} kr &middot; {car.images?.length || 0} bilder
                   </p>
                 </div>
                 <div style={s.carActions}>
@@ -1261,6 +1278,20 @@ const s = {
     aspectRatio: "16/9",
     backgroundColor: "#1a1f3a",
     overflow: "hidden",
+    position: "relative",
+  },
+  soldBadge: {
+    position: "absolute",
+    top: "8px",
+    left: "8px",
+    backgroundColor: "#ef4444",
+    color: "#ffffff",
+    fontSize: "0.65rem",
+    fontWeight: 800,
+    borderRadius: "4px",
+    padding: "2px 7px",
+    letterSpacing: "0.06em",
+    zIndex: 1,
   },
   thumbImg: {
     width: "100%",

@@ -15,6 +15,7 @@ import ContactPage from "./pages/ContactPage";
 import LoginPage from "./pages/LoginPage";
 import AdminPage from "./pages/AdminPage";
 import FavoritesPage from "./pages/FavoritesPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 function LogoutRedirect() {
   const { logout } = useAuth();
@@ -56,7 +57,7 @@ function AppContent() {
             <Route path="/favorites" element={<FavoritesPage />} />
             <Route path="/cars/:id" element={<CarDetailPage />} />
             <Route path="/logout" element={<LogoutRedirect />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </div>
         <Footer />

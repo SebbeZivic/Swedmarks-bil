@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getCarById, getAllCars } from "../services/api";
+import Toast, { useToast } from "../components/Toast";
 
 function HeartIcon({ filled }) {
   return filled ? (
@@ -24,6 +25,7 @@ function loadFavorites() {
 export default function CarDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [showToast, toastMsg] = useToast();
   const [car, setCar]               = useState(null);
   const [error, setError]           = useState(null);
   const [loadedId, setLoadedId]     = useState(null);
@@ -39,9 +41,21 @@ export default function CarDetailPage() {
     let cancelled = false;
     window.scrollTo({ top: 0, behavior: "smooth" });
     getCarById(id)
-      .then((d) => { if (!cancelled) { setCar(d); setError(null); setLoadedId(id); setActiveIndex(0); setLbOpen(false); } })
+      .then((d) => {
+        if (!cancelled) {
+          setCar(d);
+          setError(null);
+          setLoadedId(id);
+          setActiveIndex(0);
+          setLbOpen(false);
+          document.title = `${d.brand} ${d.model} ${d.year} | Swedmarks Bil`;
+        }
+      })
       .catch((e) => { if (!cancelled) { setCar(null); setError(e.message); setLoadedId(id); } });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      document.title = "Swedmarks Bil – Lyxiga bilar i Helsingborg";
+    };
   }, [id]);
 
   useEffect(() => {
@@ -72,8 +86,11 @@ export default function CarDetailPage() {
 
   function toggleFav() {
     setFavs((p) => {
-      const n = p.includes(id) ? p.filter((f) => f !== id) : [...p, id];
+      const adding = !p.includes(id);
+      const n = adding ? [...p, id] : p.filter((f) => f !== id);
       localStorage.setItem("favorites", JSON.stringify(n));
+      window.dispatchEvent(new Event("favoritesChanged"));
+      showToast(adding ? "Tillagd i favoriter" : "Borttagen från favoriter");
       return n;
     });
   }
@@ -178,6 +195,12 @@ export default function CarDetailPage() {
 
         {/* Info */}
         <section style={s.info}>
+          {car.status === "sold" && (
+            <div style={s.soldBanner}>
+              <span style={s.soldBannerText}>SÅLD</span>
+              Denna bil är tyvärr redan såld.
+            </div>
+          )}
           <h1 style={s.heading} className="detail-heading">{car.brand} {car.model}</h1>
           <div style={s.meta}>
             <span>{car.year}</span>
@@ -214,9 +237,16 @@ export default function CarDetailPage() {
                 <p style={s.sellerLocation}>Helsingborg, Sverige</p>
               </div>
             </div>
-            <button style={s.contactBtn} className="detail-contact-btn" onClick={() => navigate("/contact")}>
-              Kontakta säljaren
-            </button>
+            <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
+              <a href="tel:073-4060608" style={s.phoneBtn} className="detail-contact-btn">
+                📞 073-406 06 08
+              </a>
+              {car.status !== "sold" && (
+                <button style={s.contactBtn} className="detail-contact-btn" onClick={() => navigate("/contact")}>
+                  Kontakta säljaren
+                </button>
+              )}
+            </div>
           </div>
         </section>
 
@@ -248,6 +278,7 @@ export default function CarDetailPage() {
           </section>
         )}
       </main>
+      <Toast message={toastMsg} />
     </>
   );
 }
@@ -311,6 +342,25 @@ const s = {
   thumbActive: { borderColor: "#c9a961" },
   thumbImg: { width: "100%", height: "100%", objectFit: "cover", display: "block" },
 
+  soldBanner: {
+    display: "flex", alignItems: "center", gap: "0.6rem",
+    backgroundColor: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)",
+    borderRadius: "8px", padding: "0.7rem 1rem", marginBottom: "1rem",
+    fontSize: "0.9rem", color: "#ef4444", fontWeight: 500,
+  },
+  soldBannerText: {
+    backgroundColor: "#ef4444", color: "#fff",
+    fontSize: "0.65rem", fontWeight: 800, borderRadius: "4px",
+    padding: "2px 7px", letterSpacing: "0.06em", flexShrink: 0,
+  },
+  phoneBtn: {
+    display: "inline-flex", alignItems: "center",
+    backgroundColor: "transparent", color: "#c9a961",
+    border: "1px solid rgba(201,169,97,0.35)", borderRadius: "8px",
+    padding: "0.6rem 1.1rem", cursor: "pointer",
+    fontWeight: 600, fontSize: "0.875rem", fontFamily: "inherit",
+    textDecoration: "none", letterSpacing: "0.01em", transition: "border-color 0.18s",
+  },
   info: { paddingBottom: "1.5rem" },
   heading: { fontSize: "1.85rem", fontWeight: 700, color: "#ffffff", margin: "0 0 0.4rem", letterSpacing: "-0.02em" },
   meta: { display: "flex", alignItems: "center", gap: "0.5rem", color: "#6b6b7e", fontSize: "0.875rem", marginBottom: "0.75rem" },

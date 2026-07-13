@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getAllCars } from "../services/api";
+import Toast, { useToast } from "../components/Toast";
 const logoImg = "/logo.png";
 
 // ── Hero ────────────────────────────────────────────────────────────
@@ -207,6 +208,7 @@ const EMPTY_FILTERS = { search: "", brand: "", fuel: "", bodyType: "", yearMin: 
 export default function CatalogPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [showToast, toastMsg] = useToast();
 
   const [cars, setCars]         = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -214,6 +216,8 @@ export default function CatalogPage() {
   const [favorites, setFavs]    = useState(loadFavorites);
   const [hoveredCard, setHover] = useState(null);
   const [filterOpen, setFilterOpen] = useState(() => window.innerWidth > 768);
+  const [sortBy, setSortBy]     = useState("");
+  const [displayCount, setDisplayCount] = useState(12);
   const [filters, setFilters]   = useState({
     ...EMPTY_FILTERS,
     bodyType: searchParams.get("bodyType") || "",
@@ -234,6 +238,11 @@ export default function CatalogPage() {
   }, []);
 
   useEffect(() => {
+    document.title = "Bilar till salu | Swedmarks Bil";
+    return () => { document.title = "Swedmarks Bil – Lyxiga bilar i Helsingborg"; };
+  }, []);
+
+  useEffect(() => {
     getAllCars()
       .then((d) => setCars(d))
       .catch((e) => setError(e.message))
@@ -244,6 +253,7 @@ export default function CatalogPage() {
   const uniqueBodyTypes = [...new Set(cars.map((c) => c.bodyType).filter(Boolean))].sort();
 
   const filteredCars = cars.filter((c) => {
+    if (c.status === "sold") return false;
     if (filters.search) {
       const q = filters.search.toLowerCase();
       if (!c.brand?.toLowerCase().includes(q) && !c.model?.toLowerCase().includes(q) &&
@@ -259,18 +269,33 @@ export default function CatalogPage() {
     return true;
   });
 
+  const sortedCars = [...filteredCars].sort((a, b) => {
+    if (sortBy === "price-asc")  return a.price - b.price;
+    if (sortBy === "price-desc") return b.price - a.price;
+    if (sortBy === "year-desc")  return b.year  - a.year;
+    if (sortBy === "year-asc")   return a.year  - b.year;
+    return 0;
+  });
+
+  const visibleCars = sortedCars.slice(0, displayCount);
+  const hasMore = displayCount < sortedCars.length;
+
   const activeCount = Object.values(filters).filter(Boolean).length;
-  const setF = (k, v) => setFilters((p) => ({ ...p, [k]: v }));
+  const setF = (k, v) => { setFilters((p) => ({ ...p, [k]: v })); setDisplayCount(12); };
 
   function reset() {
     setFilters(EMPTY_FILTERS);
+    setDisplayCount(12);
     navigate("/", { replace: true });
   }
 
   function toggleFav(id) {
     setFavs((p) => {
-      const n = p.includes(id) ? p.filter((f) => f !== id) : [...p, id];
+      const adding = !p.includes(id);
+      const n = adding ? [...p, id] : p.filter((f) => f !== id);
       localStorage.setItem("favorites", JSON.stringify(n));
+      window.dispatchEvent(new Event("favoritesChanged"));
+      showToast(adding ? "Tillagd i favoriter" : "Borttagen från favoriter");
       return n;
     });
   }
@@ -395,19 +420,33 @@ export default function CatalogPage() {
           </div>
         </div>
 
-        <p style={s.resultCount}>
-          {loading ? "Laddar..." : `${filteredCars.length} ${filteredCars.length === 1 ? "bil" : "bilar"}${activeCount > 0 ? " matchar" : ""}`}
-        </p>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.25rem" }}>
+          <p style={{ ...s.resultCount, marginBottom: 0 }}>
+            {loading ? "Laddar..." : `${sortedCars.length} ${sortedCars.length === 1 ? "bil" : "bilar"}${activeCount > 0 ? " matchar" : ""}`}
+          </p>
+          <select
+            className="filter-select"
+            style={{ ...s.select, flex: "0 0 auto", minWidth: "160px" }}
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); setDisplayCount(12); }}
+          >
+            <option value="">Sortering</option>
+            <option value="price-asc">Pris: lägst först</option>
+            <option value="price-desc">Pris: högst först</option>
+            <option value="year-desc">År: nyast först</option>
+            <option value="year-asc">År: äldst först</option>
+          </select>
+        </div>
 
         {error && <p style={s.errorText}>{error}</p>}
 
-        {!loading && !error && filteredCars.length === 0 && (
+        {!loading && !error && sortedCars.length === 0 && (
           <p style={s.emptyText}>Inga bilar hittades med valda filter.</p>
         )}
 
-        {!loading && filteredCars.length > 0 && (
+        {!loading && sortedCars.length > 0 && (
           <div style={s.grid} className="catalog-grid">
-            {filteredCars.map((car) => {
+            {visibleCars.map((car) => {
               const isFav  = favorites.includes(car._id);
               const imgSrc = car.images?.[0] || null;
               return (
@@ -454,7 +493,20 @@ export default function CatalogPage() {
             })}
           </div>
         )}
+
+        {hasMore && (
+          <div style={{ textAlign: "center", marginTop: "2.5rem" }}>
+            <button
+              style={s.loadMoreBtn}
+              onClick={() => setDisplayCount((n) => n + 12)}
+            >
+              Ladda fler ({sortedCars.length - displayCount} kvar)
+            </button>
+          </div>
+        )}
       </section>
+
+      <Toast message={toastMsg} />
     </div>
   );
 }
@@ -692,5 +744,18 @@ const s = {
     fontWeight: 700,
     color: "#c9a961",
     letterSpacing: "-0.01em",
+  },
+  loadMoreBtn: {
+    backgroundColor: "transparent",
+    border: "1px solid rgba(201,169,97,0.35)",
+    borderRadius: "8px",
+    padding: "0.75rem 2.5rem",
+    fontSize: "0.9rem",
+    fontWeight: 600,
+    color: "#c9a961",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    letterSpacing: "0.02em",
+    transition: "border-color 0.18s, background 0.18s",
   },
 };

@@ -45,6 +45,11 @@ function HamburgerIcon({ open }) {
   );
 }
 
+function loadFavCount() {
+  try { return JSON.parse(localStorage.getItem("favorites") || "[]").length; }
+  catch { return 0; }
+}
+
 export default function Navbar() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -53,12 +58,19 @@ export default function Navbar() {
   const [hovered, setHovered] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [searchValue, setSearchValue] = useState("");
+  const [favCount, setFavCount] = useState(loadFavCount);
   const triggerRef = useRef(null);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    const update = () => setFavCount(loadFavCount());
+    window.addEventListener("favoritesChanged", update);
+    return () => window.removeEventListener("favoritesChanged", update);
   }, []);
 
   useEffect(() => {
@@ -158,6 +170,9 @@ export default function Navbar() {
                 {...hover("favorites")}
               >
                 <HeartNavIcon /> Favoriter
+                {favCount > 0 && (
+                  <span style={s.favBadge}>{favCount}</span>
+                )}
               </Link>
 
               <Link to="/contact" style={navLinkStyle("contact")} {...hover("contact")}>Kontakt</Link>
@@ -239,6 +254,7 @@ export default function Navbar() {
             <Link to="/favorites" style={s.mobileLink} onClick={() => setMenuOpen(false)}>
               <span style={{ ...s.mobileLinkLabel, display: "flex", alignItems: "center", gap: "6px" }}>
                 <HeartNavIcon /> Favoriter
+                {favCount > 0 && <span style={s.favBadge}>{favCount}</span>}
               </span>
             </Link>
 
@@ -532,5 +548,16 @@ const s = {
     height: "1px",
     backgroundColor: "rgba(201,169,97,0.15)",
     margin: "0.5rem 0",
+  },
+  favBadge: {
+    backgroundColor: "rgba(201,169,97,0.18)",
+    color: "#c9a961",
+    fontSize: "0.68rem",
+    fontWeight: 700,
+    borderRadius: "20px",
+    padding: "0.1rem 0.45rem",
+    border: "1px solid rgba(201,169,97,0.28)",
+    letterSpacing: "0.02em",
+    lineHeight: 1.4,
   },
 };

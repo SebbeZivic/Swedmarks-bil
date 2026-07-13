@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Navigate } from "react-router-dom";
 import { login, register } from "../services/api";
 import { useAuth } from "../context/AuthContext";
@@ -12,6 +12,11 @@ export default function LoginPage() {
 
   const { login: authLogin, user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Logga in | Swedmarks Bil";
+    return () => { document.title = "Swedmarks Bil – Lyxiga bilar i Helsingborg"; };
+  }, []);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -96,6 +101,14 @@ export default function LoginPage() {
           <button type="submit" disabled={loading} style={{ ...s.submit, opacity: loading ? 0.7 : 1 }}>
             {loading ? "Väntar..." : tab === "login" ? "Logga in" : "Registrera"}
           </button>
+
+          {tab === "login" && (
+            <p style={s.forgotNote}>
+              Glömt lösenordet? Kontakta oss på{" "}
+              <a href="mailto:swedmarksbil@gmail.com" style={s.forgotLink}>swedmarksbil@gmail.com</a>{" "}
+              för återställning.
+            </p>
+          )}
         </form>
       </div>
     </main>
@@ -205,5 +218,16 @@ const s = {
     fontFamily: "inherit",
     letterSpacing: "0.02em",
     transition: "opacity 0.18s",
+  },
+  forgotNote: {
+    fontSize: "0.78rem",
+    color: "#6b6b7e",
+    textAlign: "center",
+    margin: "0.25rem 0 0",
+    lineHeight: 1.5,
+  },
+  forgotLink: {
+    color: "#c9a961",
+    textDecoration: "none",
   },
 };

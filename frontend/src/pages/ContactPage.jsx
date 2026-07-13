@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createMessage } from "../services/api";
 
 function InfoRow({ label, value }) {
@@ -11,6 +11,11 @@ function InfoRow({ label, value }) {
 }
 
 export default function ContactPage() {
+  useEffect(() => {
+    document.title = "Kontakta oss | Swedmarks Bil";
+    return () => { document.title = "Swedmarks Bil – Lyxiga bilar i Helsingborg"; };
+  }, []);
+
   const [form, setForm]       = useState({ name: "", email: "", phone: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
   const [sending, setSending] = useState(false);
@@ -81,6 +86,15 @@ export default function ContactPage() {
               <span style={s.dayLabel}>Söndag</span>
               <span style={{ ...s.timeLabel, color: "#6b6b7e", fontWeight: 400 }}>Stängt</span>
             </div>
+          </div>
+
+          <div style={{ ...s.card, marginTop: "1.25rem", padding: 0, overflow: "hidden" }}>
+            <iframe
+              title="Karta – Birkagatan 5, Helsingborg"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=12.6820%2C56.0430%2C12.7020%2C56.0530&layer=mapnik&marker=56.0479%2C12.6920"
+              style={{ width: "100%", height: "220px", border: "none", display: "block" }}
+              loading="lazy"
+            />
           </div>
         </div>
 

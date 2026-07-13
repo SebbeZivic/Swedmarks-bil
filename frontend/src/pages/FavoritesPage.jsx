@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllCars } from "../services/api";
+import Toast, { useToast } from "../components/Toast";
 
 function HeartIcon({ filled }) {
   return filled ? (
@@ -23,6 +24,7 @@ function loadFavorites() {
 
 export default function FavoritesPage() {
   const navigate = useNavigate();
+  const [showToast, toastMsg] = useToast();
   const [allCars, setAllCars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -30,6 +32,11 @@ export default function FavoritesPage() {
   const [hovered, setHovered] = useState(null);
 
   const favoriteCars = allCars.filter((car) => favorites.includes(car._id));
+
+  useEffect(() => {
+    document.title = "Sparade bilar | Swedmarks Bil";
+    return () => { document.title = "Swedmarks Bil – Lyxiga bilar i Helsingborg"; };
+  }, []);
 
   useEffect(() => {
     getAllCars()
@@ -40,8 +47,11 @@ export default function FavoritesPage() {
 
   function toggleFav(id) {
     setFavs((p) => {
-      const n = p.includes(id) ? p.filter((f) => f !== id) : [...p, id];
+      const adding = !p.includes(id);
+      const n = adding ? [...p, id] : p.filter((f) => f !== id);
       localStorage.setItem("favorites", JSON.stringify(n));
+      window.dispatchEvent(new Event("favoritesChanged"));
+      showToast(adding ? "Tillagd i favoriter" : "Borttagen från favoriter");
       return n;
     });
   }
@@ -102,6 +112,7 @@ export default function FavoritesPage() {
                   ) : (
                     <div style={s.imagePlaceholder}>Ingen bild</div>
                   )}
+                  {car.status === "sold" && <span style={s.soldBadge}>SÅLD</span>}
                   <div style={s.imageGradient} />
                   <button
                     style={s.heartBtn}
@@ -124,6 +135,7 @@ export default function FavoritesPage() {
           })}
         </div>
       )}
+      <Toast message={toastMsg} />
     </main>
   );
 }
@@ -220,6 +232,12 @@ const s = {
     aspectRatio: "16/9",
     backgroundColor: "#1a1f3a",
     overflow: "hidden",
+  },
+  soldBadge: {
+    position: "absolute", top: "8px", left: "8px",
+    backgroundColor: "#ef4444", color: "#ffffff",
+    fontSize: "0.62rem", fontWeight: 800, borderRadius: "4px",
+    padding: "2px 6px", letterSpacing: "0.06em", zIndex: 1,
   },
   image: {
     width: "100%", height: "100%", objectFit: "cover", display: "block",
