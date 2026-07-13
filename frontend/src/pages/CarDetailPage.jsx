@@ -98,6 +98,26 @@ export default function CarDetailPage() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 768px) {
+          .detail-main-wrap { width: 100% !important; border-radius: 8px !important; }
+          .detail-thumb-row { width: 100% !important; }
+          .detail-heading { font-size: 1.4rem !important; }
+          .detail-price { font-size: 1.5rem !important; }
+          .detail-page { padding: 1rem 0.85rem 2.5rem !important; }
+          .detail-contact-btn { min-height: 44px !important; width: 100% !important; }
+          .detail-back-btn { min-height: 44px !important; }
+          .detail-fav-btn { min-height: 44px !important; }
+          .detail-arrow-btn { width: 36px !important; height: 36px !important; font-size: 1.3rem !important; }
+          .similar-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .detail-seller-box { flex-direction: column !important; align-items: flex-start !important; }
+        }
+        @media (max-width: 480px) {
+          .similar-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .detail-heading { font-size: 1.25rem !important; }
+          .detail-price { font-size: 1.35rem !important; }
+        }
+      `}</style>
       {/* Lightbox */}
       <div
         style={{ ...s.lbOverlay, opacity: lightboxOpen ? 1 : 0, pointerEvents: lightboxOpen ? "auto" : "none" }}
@@ -116,11 +136,11 @@ export default function CarDetailPage() {
         <span style={s.lbCounter}>{lbIndex + 1} / {images.length}</span>
       </div>
 
-      <main style={s.page}>
+      <main style={s.page} className="detail-page">
         {/* Top bar */}
         <div style={s.topBar}>
-          <button style={s.backBtn} onClick={() => navigate(-1)}>← Tillbaka</button>
-          <button style={s.favBtn} onClick={toggleFav}>
+          <button style={s.backBtn} className="detail-back-btn" onClick={() => navigate(-1)}>← Tillbaka</button>
+          <button style={s.favBtn} className="detail-fav-btn" onClick={toggleFav}>
             <HeartIcon filled={isFav} />
             <span>{isFav ? "Sparat" : "Spara"}</span>
           </button>
@@ -128,7 +148,7 @@ export default function CarDetailPage() {
 
         {/* Gallery */}
         <div style={s.gallery}>
-          <div style={s.mainWrap} onClick={() => images.length > 0 && (setLbIndex(activeIndex), setLbOpen(true))}>
+          <div style={s.mainWrap} className="detail-main-wrap" onClick={() => images.length > 0 && (setLbIndex(activeIndex), setLbOpen(true))}>
             {images.length > 0 ? (
               <>
                 <img src={images[activeIndex]} alt={`${car.brand} ${car.model}`} style={{ ...s.mainImage, cursor: "zoom-in" }} />
@@ -139,14 +159,14 @@ export default function CarDetailPage() {
             )}
             {images.length > 1 && (
               <>
-                <button style={{ ...s.arrowBtn, left: "0.75rem" }} onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1)); }}>‹</button>
-                <button style={{ ...s.arrowBtn, right: "0.75rem" }} onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === images.length - 1 ? 0 : i + 1)); }}>›</button>
+                <button style={{ ...s.arrowBtn, left: "0.75rem" }} className="detail-arrow-btn" onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === 0 ? images.length - 1 : i - 1)); }}>‹</button>
+                <button style={{ ...s.arrowBtn, right: "0.75rem" }} className="detail-arrow-btn" onClick={(e) => { e.stopPropagation(); setActiveIndex((i) => (i === images.length - 1 ? 0 : i + 1)); }}>›</button>
                 <span style={s.counter}>{activeIndex + 1} / {images.length}</span>
               </>
             )}
           </div>
           {images.length > 1 && (
-            <div style={s.thumbRow}>
+            <div style={s.thumbRow} className="detail-thumb-row">
               {images.map((src, i) => (
                 <button key={i} style={i === activeIndex ? { ...s.thumb, ...s.thumbActive } : s.thumb} onClick={() => { setActiveIndex(i); setLbIndex(i); setLbOpen(true); }}>
                   <img src={src} alt="" style={s.thumbImg} />
@@ -158,13 +178,13 @@ export default function CarDetailPage() {
 
         {/* Info */}
         <section style={s.info}>
-          <h1 style={s.heading}>{car.brand} {car.model}</h1>
+          <h1 style={s.heading} className="detail-heading">{car.brand} {car.model}</h1>
           <div style={s.meta}>
             <span>{car.year}</span>
             <span style={s.dot}>·</span>
             <span>{formatMileage(car.mileage)}</span>
           </div>
-          <p style={s.price}>{formatPrice(car.price)}</p>
+          <p style={s.price} className="detail-price">{formatPrice(car.price)}</p>
 
           {detailRows.length > 0 && (
             <dl style={s.detailGrid}>
@@ -185,7 +205,7 @@ export default function CarDetailPage() {
           )}
 
           {/* Säljare */}
-          <div style={s.sellerBox}>
+          <div style={s.sellerBox} className="detail-seller-box">
             <div style={s.sellerLeft}>
               <div style={s.sellerBadge}>SW</div>
               <div>
@@ -194,7 +214,7 @@ export default function CarDetailPage() {
                 <p style={s.sellerLocation}>Helsingborg, Sverige</p>
               </div>
             </div>
-            <button style={s.contactBtn} onClick={() => navigate("/contact")}>
+            <button style={s.contactBtn} className="detail-contact-btn" onClick={() => navigate("/contact")}>
               Kontakta säljaren
             </button>
           </div>
@@ -204,7 +224,7 @@ export default function CarDetailPage() {
         {similarCars.length > 0 && (
           <section style={s.similarSection}>
             <h2 style={s.similarHeading}>Liknande bilar</h2>
-            <div style={s.similarGrid}>
+            <div style={s.similarGrid} className="similar-grid">
               {similarCars.map((c) => {
                 const thumb = c.images?.[0] ?? null;
                 return (

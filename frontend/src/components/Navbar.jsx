@@ -51,12 +51,12 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [hovered, setHovered] = useState(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 700);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [searchValue, setSearchValue] = useState("");
   const triggerRef = useRef(null);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 700);
+    const check = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
@@ -103,11 +103,17 @@ export default function Navbar() {
         .nav-search:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.07) !important; }
         .mob-search::placeholder { color: rgba(201,169,97,0.35); }
         .mob-search:focus { outline: none; border-color: rgba(201,169,97,0.4) !important; }
+        @media (max-width: 480px) {
+          .nav-logo { font-size: 1.05rem !important; }
+        }
+        .nav-hamburger { min-height: 44px !important; padding: 0.75rem 0.5rem !important; }
+        .mob-link-touch { min-height: 44px !important; padding: 0.75rem 0 !important; }
+        .mob-search-input { min-height: 44px !important; }
       `}</style>
 
       <header style={s.header}>
         <div style={isMobile ? s.navMobile : s.navDesktop}>
-          <Link to="/" style={s.logo}>
+          <Link to="/" style={s.logo} className="nav-logo">
             Swedmarks<span style={s.logoGold}> Bil</span>
           </Link>
 
@@ -206,7 +212,7 @@ export default function Navbar() {
           )}
 
           {isMobile && (
-            <button style={s.hamburgerBtn} onClick={() => setMenuOpen((o) => !o)} aria-label="Meny">
+            <button style={s.hamburgerBtn} className="nav-hamburger" onClick={() => setMenuOpen((o) => !o)} aria-label="Meny">
               <HamburgerIcon open={menuOpen} />
             </button>
           )}
@@ -218,11 +224,11 @@ export default function Navbar() {
               <svg style={s.mobileSearchIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="rgba(201,169,97,0.4)" strokeWidth="2.5">
                 <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
               </svg>
-              <input className="mob-search" style={s.mobileSearchInput} placeholder="Sök bil..." value={searchValue} onChange={handleSearchChange} />
+              <input className="mob-search mob-search-input" style={s.mobileSearchInput} placeholder="Sök bil..." value={searchValue} onChange={handleSearchChange} />
             </div>
 
             {CAR_CATEGORIES.map((cat) => (
-              <Link key={cat.label} to={cat.bodyType ? `/?bodyType=${cat.bodyType}` : "/"} style={s.mobileLink} onClick={() => setMenuOpen(false)}>
+              <Link key={cat.label} to={cat.bodyType ? `/?bodyType=${cat.bodyType}` : "/"} style={s.mobileLink} className="mob-link-touch" onClick={() => setMenuOpen(false)}>
                 <span style={s.mobileLinkLabel}>{cat.label}</span>
                 <span style={s.mobileLinkSub}>{cat.sub}</span>
               </Link>

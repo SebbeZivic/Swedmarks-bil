@@ -287,22 +287,44 @@ export default function AdminPage() {
   const unreadCount = messages.filter((m) => !m.replied).length;
 
   return (
-    <main style={s.page}>
+    <main style={s.page} className="admin-page">
       <style>{`
         .admin-input::placeholder { color: rgba(160,160,176,0.35); }
         .admin-input:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.05) !important; outline: none; }
         .admin-input option { background: #1a1f3a; color: #e0e0e0; }
+        .admin-input { min-height: 44px !important; }
+        @media (max-width: 768px) {
+          .admin-page { padding: 1.25rem 0.85rem 3rem !important; }
+          .admin-form { padding: 1rem !important; overflow-x: hidden !important; }
+          .admin-form-grid { grid-template-columns: 1fr !important; }
+          .admin-msg-row {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.5rem !important;
+            align-items: flex-start !important;
+          }
+          .admin-msg-right { align-items: flex-start !important; flex-direction: row !important; gap: 0.75rem !important; }
+          .admin-car-grid { grid-template-columns: 1fr !important; }
+          .admin-submit-btn { width: 100% !important; min-height: 48px !important; }
+          .admin-cancel-btn { min-height: 48px !important; }
+          .admin-form-actions { flex-direction: column-reverse !important; }
+          .admin-section-title { font-size: 1.1rem !important; }
+          .admin-modal { padding: 0 !important; }
+        }
+        @media (max-width: 480px) {
+          .admin-car-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
       {/* ── CAR FORM ── */}
       <section style={s.section}>
-        <h2 style={s.sectionTitle}>
+        <h2 style={s.sectionTitle} className="admin-section-title">
           {editId ? "Redigera bil" : "Lägg till bil"}
         </h2>
 
-        <form onSubmit={handleSubmit} style={s.form}>
+        <form onSubmit={handleSubmit} style={s.form} className="admin-form">
           {formError && <p style={s.errorMsg}>{formError}</p>}
 
-          <div style={s.formGrid}>
+          <div style={s.formGrid} className="admin-form-grid">
             <Field label="Titel">
               <input
                 className="admin-input"
@@ -551,15 +573,16 @@ export default function AdminPage() {
             )}
           </div>
 
-          <div style={s.formActions}>
+          <div style={s.formActions} className="admin-form-actions">
             {editId && (
-              <button type="button" onClick={cancelEdit} style={s.cancelBtn}>
+              <button type="button" onClick={cancelEdit} style={s.cancelBtn} className="admin-cancel-btn">
                 Avbryt
               </button>
             )}
             <button
               type="submit"
               style={{ ...s.submitBtn, opacity: formLoading ? 0.7 : 1 }}
+              className="admin-submit-btn"
               disabled={formLoading}
             >
               {formLoading
@@ -591,6 +614,7 @@ export default function AdminPage() {
           {messages.map((msg) => (
             <button
               key={msg._id}
+              className="admin-msg-row"
               style={{
                 ...s.msgRow,
                 ...(msg.replied ? {} : s.msgRowUnread),
@@ -606,7 +630,7 @@ export default function AdminPage() {
                   ? msg.message.slice(0, 90) + "…"
                   : msg.message}
               </p>
-              <div style={s.msgRight}>
+              <div style={s.msgRight} className="admin-msg-right">
                 <span style={s.msgDate}>{formatDate(msg.createdAt)}</span>
                 <span
                   style={{
@@ -634,7 +658,7 @@ export default function AdminPage() {
           <p style={s.statusText}>Inga bilar tillagda ännu.</p>
         )}
 
-        <div style={s.carGrid}>
+        <div style={s.carGrid} className="admin-car-grid">
           {cars.map((car) => {
             const imgSrc = car.images?.[0] || null;
             const isDeleting = deletingId === car._id;
@@ -678,7 +702,7 @@ export default function AdminPage() {
       {/* ── REPLY MODAL ── */}
       {selectedMsg && (
         <div style={s.overlay} onClick={closeMsg}>
-          <div style={s.modal} onClick={(e) => e.stopPropagation()}>
+          <div style={s.modal} className="admin-modal" onClick={(e) => e.stopPropagation()}>
             <div style={s.modalHeader}>
               <div>
                 <h3 style={s.modalTitle}>

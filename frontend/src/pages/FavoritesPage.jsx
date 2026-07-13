@@ -47,9 +47,20 @@ export default function FavoritesPage() {
   }
 
   return (
-    <main style={s.page}>
+    <main style={s.page} className="favs-page">
+      <style>{`
+        @media (max-width: 768px) {
+          .favs-page { padding: 1.75rem 0.85rem 3rem !important; }
+          .favs-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
+          .favs-heading { font-size: 1.4rem !important; }
+          .favs-browse-btn { min-height: 48px !important; font-size: 1rem !important; }
+        }
+        @media (max-width: 480px) {
+          .favs-grid { grid-template-columns: 1fr !important; gap: 0.85rem !important; }
+        }
+      `}</style>
       <div style={s.header}>
-        <h1 style={s.heading}>Sparade bilar</h1>
+        <h1 style={s.heading} className="favs-heading">Sparade bilar</h1>
         {!loading && !error && favoriteCars.length > 0 && (
           <span style={s.count}>{favoriteCars.length} {favoriteCars.length === 1 ? "bil" : "bilar"}</span>
         )}
@@ -65,12 +76,12 @@ export default function FavoritesPage() {
           </svg>
           <p style={s.emptyTitle}>Inga sparade bilar ännu</p>
           <p style={s.emptySub}>Tryck på hjärtsymbolen på en bil för att spara den här.</p>
-          <button style={s.browseBtn} onClick={() => navigate("/")}>Bläddra bland bilar</button>
+          <button style={s.browseBtn} className="favs-browse-btn" onClick={() => navigate("/")}>Bläddra bland bilar</button>
         </div>
       )}
 
       {!loading && !error && favoriteCars.length > 0 && (
-        <div style={s.grid}>
+        <div style={s.grid} className="favs-grid">
           {favoriteCars.map((car) => {
             const isFav  = favorites.includes(car._id);
             const imgSrc = car.images?.[0] || null;

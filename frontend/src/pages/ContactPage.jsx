@@ -41,16 +41,28 @@ export default function ContactPage() {
       <style>{`
         .contact-input::placeholder { color: rgba(160,160,176,0.35); }
         .contact-input:focus { border-color: rgba(201,169,97,0.5) !important; background: rgba(201,169,97,0.05) !important; outline: none; }
+        .contact-input { min-height: 44px !important; }
+        .contact-textarea { min-height: 120px !important; }
+        @media (max-width: 768px) {
+          .contact-hero { padding: 2rem 1rem !important; }
+          .contact-hero-title { font-size: 1.6rem !important; }
+          .contact-content { padding: 1.5rem 0.85rem 3rem !important; }
+          .contact-submit-btn { width: 100% !important; align-self: stretch !important; min-height: 48px !important; font-size: 1rem !important; }
+          .contact-card { padding: 1.25rem !important; }
+        }
+        @media (max-width: 480px) {
+          .contact-hero-title { font-size: 1.4rem !important; }
+        }
       `}</style>
 
-      <div style={s.hero}>
-        <h1 style={s.heroTitle}>Kontakta oss</h1>
+      <div style={s.hero} className="contact-hero">
+        <h1 style={s.heroTitle} className="contact-hero-title">Kontakta oss</h1>
         <p style={s.heroSub}>Vi hjälper dig hitta rätt bil. Tveka inte att höra av dig!</p>
       </div>
 
-      <div style={s.content}>
+      <div style={s.content} className="contact-content">
         <div style={s.infoCol}>
-          <div style={s.card}>
+          <div style={s.card} className="contact-card">
             <h2 style={s.cardTitle}>Swedmarks Bil</h2>
             <div style={s.infoList}>
               <InfoRow label="Adress"  value="Birkagatan 5, Helsingborg" />
@@ -100,10 +112,10 @@ export default function ContactPage() {
                 </div>
                 <div style={s.formRow}>
                   <label style={s.label}>Meddelande *</label>
-                  <textarea className="contact-input" style={s.textarea} name="message" value={form.message} onChange={handleChange} placeholder="Vad kan vi hjälpa dig med?" rows={5} required />
+                  <textarea className="contact-input contact-textarea" style={s.textarea} name="message" value={form.message} onChange={handleChange} placeholder="Vad kan vi hjälpa dig med?" rows={5} required />
                 </div>
                 {sendError && <p style={s.sendError}>{sendError}</p>}
-                <button type="submit" disabled={sending} style={{ ...s.submitBtn, opacity: sending ? 0.7 : 1 }}>
+                <button type="submit" disabled={sending} className="contact-submit-btn" style={{ ...s.submitBtn, opacity: sending ? 0.7 : 1 }}>
                   {sending ? "Skickar…" : "Skicka meddelande"}
                 </button>
               </form>

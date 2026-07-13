@@ -213,6 +213,7 @@ export default function CatalogPage() {
   const [error, setError]       = useState(null);
   const [favorites, setFavs]    = useState(loadFavorites);
   const [hoveredCard, setHover] = useState(null);
+  const [filterOpen, setFilterOpen] = useState(() => window.innerWidth > 768);
   const [filters, setFilters]   = useState({
     ...EMPTY_FILTERS,
     bodyType: searchParams.get("bodyType") || "",
@@ -224,6 +225,12 @@ export default function CatalogPage() {
     const s  = searchParams.get("search")   || "";
     setFilters((p) => (p.bodyType === bt && p.search === s ? p : { ...p, bodyType: bt, search: s }));
   }, [searchParams]);
+
+  useEffect(() => {
+    const check = () => { if (window.innerWidth > 768) setFilterOpen(true); };
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   useEffect(() => {
     getAllCars()
@@ -274,64 +281,116 @@ export default function CatalogPage() {
         .filter-input:focus { border-color: rgba(201,169,97,0.45) !important; background: rgba(201,169,97,0.07) !important; outline: none; }
         .filter-select:focus { border-color: rgba(201,169,97,0.45) !important; outline: none; }
         .car-card:hover { box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(201,169,97,0.15) !important; transform: translateY(-3px) !important; }
+
+        .filter-toggle-row { display: none; }
+        .filter-body { display: flex; flex-direction: column; gap: 0.75rem; }
+        .filter-body--closed { display: flex; }
+
+        @media (max-width: 768px) {
+          .catalog-section { padding: 2rem 0.85rem 3rem !important; }
+          .filter-panel { padding: 0.85rem 1rem !important; }
+          .filter-toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 44px;
+          }
+          .filter-toggle-btn {
+            margin-left: auto;
+            background: none;
+            border: 1px solid rgba(201,169,97,0.3);
+            border-radius: 6px;
+            color: #c9a961;
+            padding: 0.35rem 0.85rem;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            min-height: 44px;
+          }
+          .filter-body { display: none; }
+          .filter-body--open { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
+          .catalog-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 1rem !important; }
+          .filter-input, .filter-select { min-height: 44px !important; }
+          .reset-btn { min-height: 44px !important; }
+        }
+        @media (max-width: 480px) {
+          .catalog-grid { grid-template-columns: 1fr !important; gap: 0.85rem !important; }
+          .range-group { flex-wrap: wrap !important; }
+        }
       `}</style>
 
       <HeroSection />
 
       {/* Catalog section */}
-      <section style={{ maxWidth: "1240px", margin: "0 auto", padding: "3.5rem 1.25rem 4rem" }}>
+      <section style={{ maxWidth: "1240px", margin: "0 auto", padding: "3.5rem 1.25rem 4rem" }} className="catalog-section">
         <h2 style={s.sectionTitle}>Våra bilar</h2>
 
         {/* Filter panel */}
-        <div style={s.filterPanel}>
-          <div style={s.filterRow}>
-            <div style={s.searchWrap}>
-              <svg style={s.searchIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="rgba(201,169,97,0.4)" strokeWidth="2.5">
-                <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-              </svg>
-              <input
-                className="filter-input"
-                style={s.searchInput}
-                placeholder="Sök märke, modell, år..."
-                value={filters.search}
-                onChange={(e) => setF("search", e.target.value)}
-              />
-            </div>
-            <select className="filter-select" style={s.select} value={filters.brand} onChange={(e) => setF("brand", e.target.value)}>
-              <option value="">Alla märken</option>
-              {uniqueBrands.map((b) => <option key={b} value={b}>{b}</option>)}
-            </select>
-            <select className="filter-select" style={s.select} value={filters.fuel} onChange={(e) => setF("fuel", e.target.value)}>
-              <option value="">Alla drivmedel</option>
-              {["Bensin","Diesel","El","Hybrid"].map((f) => <option key={f} value={f}>{f}</option>)}
-            </select>
-            <select className="filter-select" style={s.select} value={filters.bodyType} onChange={(e) => setF("bodyType", e.target.value)}>
-              <option value="">Alla karosserier</option>
-              {uniqueBodyTypes.map((bt) => <option key={bt} value={bt}>{bt}</option>)}
-            </select>
+        <div style={s.filterPanel} className="filter-panel">
+          {/* Mobile toggle header */}
+          <div className="filter-toggle-row">
+            <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#c9a961" }}>Filter</span>
+            {activeCount > 0 && (
+              <span style={{ fontSize: "0.72rem", color: "#c9a961", backgroundColor: "rgba(201,169,97,0.12)", borderRadius: "20px", padding: "0.15rem 0.55rem", border: "1px solid rgba(201,169,97,0.25)" }}>
+                {activeCount} aktiva
+              </span>
+            )}
+            <button className="filter-toggle-btn" onClick={() => setFilterOpen((o) => !o)} aria-expanded={filterOpen}>
+              {filterOpen ? "▲ Dölj" : "▼ Visa filter"}
+            </button>
           </div>
 
-          <div style={s.filterRow}>
-            <div style={s.rangeGroup}>
-              <span style={s.rangeLabel}>År</span>
-              <input className="filter-input" style={s.rangeInput} type="number" placeholder="Från" value={filters.yearMin} onChange={(e) => setF("yearMin", e.target.value)} min="1900" max="2099" />
-              <span style={s.rangeSep}>–</span>
-              <input className="filter-input" style={s.rangeInput} type="number" placeholder="Till" value={filters.yearMax} onChange={(e) => setF("yearMax", e.target.value)} min="1900" max="2099" />
-            </div>
-            <div style={s.rangeGroup}>
-              <span style={s.rangeLabel}>Pris (kr)</span>
-              <input className="filter-input" style={s.rangeInput} type="number" placeholder="Från" value={filters.priceMin} onChange={(e) => setF("priceMin", e.target.value)} min="0" />
-              <span style={s.rangeSep}>–</span>
-              <input className="filter-input" style={s.rangeInput} type="number" placeholder="Till" value={filters.priceMax} onChange={(e) => setF("priceMax", e.target.value)} min="0" />
-            </div>
-            {activeCount > 0 && (
-              <button style={s.resetBtn} onClick={reset}>
-                <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+          <div className={filterOpen ? "filter-body filter-body--open" : "filter-body"}>
+            <div style={s.filterRow}>
+              <div style={s.searchWrap}>
+                <svg style={s.searchIcon} viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="rgba(201,169,97,0.4)" strokeWidth="2.5">
+                  <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                Återställ ({activeCount})
-              </button>
-            )}
+                <input
+                  className="filter-input"
+                  style={s.searchInput}
+                  placeholder="Sök märke, modell, år..."
+                  value={filters.search}
+                  onChange={(e) => setF("search", e.target.value)}
+                />
+              </div>
+              <select className="filter-select" style={s.select} value={filters.brand} onChange={(e) => setF("brand", e.target.value)}>
+                <option value="">Alla märken</option>
+                {uniqueBrands.map((b) => <option key={b} value={b}>{b}</option>)}
+              </select>
+              <select className="filter-select" style={s.select} value={filters.fuel} onChange={(e) => setF("fuel", e.target.value)}>
+                <option value="">Alla drivmedel</option>
+                {["Bensin","Diesel","El","Hybrid"].map((f) => <option key={f} value={f}>{f}</option>)}
+              </select>
+              <select className="filter-select" style={s.select} value={filters.bodyType} onChange={(e) => setF("bodyType", e.target.value)}>
+                <option value="">Alla karosserier</option>
+                {uniqueBodyTypes.map((bt) => <option key={bt} value={bt}>{bt}</option>)}
+              </select>
+            </div>
+
+            <div style={s.filterRow}>
+              <div style={s.rangeGroup} className="range-group">
+                <span style={s.rangeLabel}>År</span>
+                <input className="filter-input" style={s.rangeInput} type="number" placeholder="Från" value={filters.yearMin} onChange={(e) => setF("yearMin", e.target.value)} min="1900" max="2099" />
+                <span style={s.rangeSep}>–</span>
+                <input className="filter-input" style={s.rangeInput} type="number" placeholder="Till" value={filters.yearMax} onChange={(e) => setF("yearMax", e.target.value)} min="1900" max="2099" />
+              </div>
+              <div style={s.rangeGroup} className="range-group">
+                <span style={s.rangeLabel}>Pris (kr)</span>
+                <input className="filter-input" style={s.rangeInput} type="number" placeholder="Från" value={filters.priceMin} onChange={(e) => setF("priceMin", e.target.value)} min="0" />
+                <span style={s.rangeSep}>–</span>
+                <input className="filter-input" style={s.rangeInput} type="number" placeholder="Till" value={filters.priceMax} onChange={(e) => setF("priceMax", e.target.value)} min="0" />
+              </div>
+              {activeCount > 0 && (
+                <button style={s.resetBtn} className="reset-btn" onClick={reset}>
+                  <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                  Återställ ({activeCount})
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -346,7 +405,7 @@ export default function CatalogPage() {
         )}
 
         {!loading && filteredCars.length > 0 && (
-          <div style={s.grid}>
+          <div style={s.grid} className="catalog-grid">
             {filteredCars.map((car) => {
               const isFav  = favorites.includes(car._id);
               const imgSrc = car.images?.[0] || null;
