@@ -28,11 +28,6 @@ function LogoutRedirect() {
   return null;
 }
 
-function ProtectedRoute({ children }) {
-  const { user } = useAuth();
-  return user ? children : <Navigate to="/login" replace />;
-}
-
 function AdminRoute({ children }) {
   const { user } = useAuth();
   return user?.isAdmin ? children : <Navigate to="/" replace />;

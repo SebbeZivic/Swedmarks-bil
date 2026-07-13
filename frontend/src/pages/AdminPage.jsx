@@ -238,7 +238,7 @@ export default function AdminPage() {
       const saved = editId
         ? await updateCar(editId, payload)
         : await createCar(payload);
-      const targetId = editId ?? saved._id;
+      const targetId = editId ?? saved.car._id;
 
       const newItems = imageItems.filter((item) => item.file);
       const uploadedUris = {};

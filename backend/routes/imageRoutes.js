@@ -4,7 +4,7 @@ const {
   uploadImageToCar,
   deleteImageFromCar,
 } = require("../controllers/imageController");
-const { authenticate } = require("../middleware/authMiddleware");
+const { isAdmin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -23,8 +23,8 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // Max 5MB
 });
 
-// Routes
-router.post("/:carId", authenticate, upload.single("image"), uploadImageToCar);
-router.delete("/:carId/:imageIndex", authenticate, deleteImageFromCar);
+// Admin-only routes
+router.post("/:carId", isAdmin, upload.single("image"), uploadImageToCar);
+router.delete("/:carId/:imageIndex", isAdmin, deleteImageFromCar);
 
 module.exports = router;

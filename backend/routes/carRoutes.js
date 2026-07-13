@@ -6,7 +6,7 @@ const {
   updateCar,
   deleteCar,
 } = require("../controllers/carController");
-const { authenticate } = require("../middleware/authMiddleware");
+const { isAdmin } = require("../middleware/authMiddleware");
 const { validateCar } = require("../middleware/validationMiddleware");
 
 const router = express.Router();
@@ -15,9 +15,9 @@ const router = express.Router();
 router.get("/", getAllCars);
 router.get("/:id", getCarById);
 
-// Admin routes med validering
-router.post("/", authenticate, validateCar, createCar);
-router.put("/:id", authenticate, validateCar, updateCar);
-router.delete("/:id", authenticate, deleteCar);
+// Admin-only routes med validering
+router.post("/", isAdmin, validateCar, createCar);
+router.put("/:id", isAdmin, validateCar, updateCar);
+router.delete("/:id", isAdmin, deleteCar);
 
 module.exports = router;

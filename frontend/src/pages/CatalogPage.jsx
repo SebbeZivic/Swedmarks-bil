@@ -223,6 +223,7 @@ export default function CatalogPage() {
   useEffect(() => {
     const bt = searchParams.get("bodyType") || "";
     const s  = searchParams.get("search")   || "";
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFilters((p) => (p.bodyType === bt && p.search === s ? p : { ...p, bodyType: bt, search: s }));
   }, [searchParams]);
 

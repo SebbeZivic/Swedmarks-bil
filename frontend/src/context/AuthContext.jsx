@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState } from "react";
 
 export const AuthContext = createContext(null);
@@ -10,7 +11,7 @@ export function AuthProvider({ children }) {
     if (token && savedUser) {
       try {
         return JSON.parse(savedUser);
-      } catch (_) {
+      } catch {
         console.error("Kunde inte parse user från localStorage");
         localStorage.removeItem("token");
         localStorage.removeItem("user");

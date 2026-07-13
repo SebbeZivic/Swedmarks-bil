@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { login, register } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 
@@ -10,8 +10,10 @@ export default function LoginPage() {
   const [error, setError]     = useState("");
   const [loading, setLoading] = useState(false);
 
-  const { login: authLogin } = useAuth();
+  const { login: authLogin, user } = useAuth();
   const navigate = useNavigate();
+
+  if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();

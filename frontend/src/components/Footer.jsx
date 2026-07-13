@@ -30,7 +30,7 @@ export default function Footer() {
           <h4 style={styles.colTitle}>Navigering</h4>
           <FooterLink to="/">Bilkatalog</FooterLink>
           <FooterLink to="/contact">Kontakt</FooterLink>
-          <FooterLink to="/login">Admin</FooterLink>
+          <FooterLink to="/admin">Admin</FooterLink>
         </div>
 
         <div style={styles.col}>
